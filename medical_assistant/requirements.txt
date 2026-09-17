@@ -4,3 +4,8 @@ openai
 python-dotenv
 pydantic
 pymysql
+langchain
+langchain-chroma
+fastembed
+pymupdf
+httpx

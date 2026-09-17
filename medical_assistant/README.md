@@ -65,7 +65,7 @@ medical_assistant/
 | --- | --- | --- |
 | M1 | 需求分析 | ✅ 已完成（见 RAG医疗v3.md.md） |
 | M2 | 基础后端（FastAPI + 基础聊天 API） | 🚧 进行中 |
-| M3 | RAG 知识库 | 待开发 |
+| M3 | RAG 知识库 | ✅ 已完成（内/外科学第10版，8398 chunks 已入库） |
 | M4 | 单 Agent 医疗咨询 | 待开发 |
 | M5 | Multi-Agent | 待开发 |
 | M6 | Agent 协同（Supervisor + LangGraph） | 待开发 |
