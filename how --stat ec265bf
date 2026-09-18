@@ -1,0 +1,54 @@
+[33mcommit 855cc0c25e0e82635137b991fa349a7bc01a3ac3[m
+Author: yuyou2004 <2294788331@qq.com>
+Date:   Fri Sep 18 10:47:49 2026 +0800
+
+    RAG功能+agent功能
+    
+    做了RAG功能的改良，还有supervisor_agent这个智能体统一管理下面的小智能体，还有做了专科对应的小智能体
+
+ .env                                                 |  13 [32m+++++++++++++[m
+ app/__pycache__/__init__.cpython-312.pyc             | Bin [31m0[m -> [32m212[m bytes
+ app/__pycache__/main.cpython-312.pyc                 | Bin [31m0[m -> [32m2741[m bytes
+ app/agent/__pycache__/__init__.cpython-312.pyc       | Bin [31m0[m -> [32m2505[m bytes
+ app/agent/__pycache__/answer_agent.cpython-312.pyc   | Bin [31m0[m -> [32m2679[m bytes
+ app/agent/__pycache__/base.cpython-312.pyc           | Bin [31m0[m -> [32m2643[m bytes
+ app/agent/__pycache__/inquiry_agent.cpython-312.pyc  | Bin [31m0[m -> [32m2160[m bytes
+ app/agent/__pycache__/rag_agent.cpython-312.pyc      | Bin [31m0[m -> [32m3394[m bytes
+ app/agent/__pycache__/risk_agent.cpython-312.pyc     | Bin [31m0[m -> [32m3462[m bytes
+ .../__pycache__/specialty_agent.cpython-312.pyc      | Bin [31m0[m -> [32m891[m bytes
+ app/agent/__pycache__/supervisor.cpython-312.pyc     | Bin [31m0[m -> [32m11507[m bytes
+ app/agent/__pycache__/symptom_agent.cpython-312.pyc  | Bin [31m0[m -> [32m855[m bytes
+ app/api/__pycache__/__init__.cpython-312.pyc         | Bin [31m0[m -> [32m232[m bytes
+ app/api/__pycache__/agent.cpython-312.pyc            | Bin [31m0[m -> [32m3500[m bytes
+ app/api/__pycache__/auth.cpython-312.pyc             | Bin [31m0[m -> [32m4256[m bytes
+ app/api/__pycache__/chat.cpython-312.pyc             | Bin [31m0[m -> [32m3534[m bytes
+ app/api/__pycache__/consultation.cpython-312.pyc     | Bin [31m0[m -> [32m5467[m bytes
+ app/api/__pycache__/knowledge.cpython-312.pyc        | Bin [31m0[m -> [32m2278[m bytes
+ app/config/__pycache__/__init__.cpython-312.pyc      | Bin [31m0[m -> [32m253[m bytes
+ app/config/__pycache__/prompt.cpython-312.pyc        | Bin [31m0[m -> [32m7893[m bytes
+ app/config/__pycache__/settings.cpython-312.pyc      | Bin [31m0[m -> [32m3684[m bytes
+ app/dao/__pycache__/__init__.cpython-312.pyc         | Bin [31m0[m -> [32m222[m bytes
+ app/dao/__pycache__/consultation_dao.cpython-312.pyc | Bin [31m0[m -> [32m3786[m bytes
+ app/dao/__pycache__/db.cpython-312.pyc               | Bin [31m0[m -> [32m3779[m bytes
+ app/dao/__pycache__/knowledge_dao.cpython-312.pyc    | Bin [31m0[m -> [32m2074[m bytes
+ app/dao/__pycache__/user_dao.cpython-312.pyc         | Bin [31m0[m -> [32m2942[m bytes
+ app/rag/__pycache__/__init__.cpython-312.pyc         | Bin [31m0[m -> [32m253[m bytes
+ app/rag/__pycache__/embedding.cpython-312.pyc        | Bin [31m0[m -> [32m3710[m bytes
+ app/rag/__pycache__/loader.cpython-312.pyc           | Bin [31m0[m -> [32m1911[m bytes
+ app/rag/__pycache__/reranker.cpython-312.pyc         | Bin [31m0[m -> [32m2057[m bytes
+ app/rag/__pycache__/retriever.cpython-312.pyc        | Bin [31m0[m -> [32m3501[m bytes
+ app/rag/__pycache__/splitter.cpython-312.pyc         | Bin [31m0[m -> [32m1301[m bytes
+ app/service/__pycache__/__init__.cpython-312.pyc     | Bin [31m0[m -> [32m208[m bytes
+ app/service/__pycache__/chat_service.cpython-312.pyc | Bin [31m0[m -> [32m1310[m bytes
+ .../__pycache__/consultation_service.cpython-312.pyc | Bin [31m0[m -> [32m6045[m bytes
+ app/service/__pycache__/llm_service.cpython-312.pyc  | Bin [31m0[m -> [32m4523[m bytes
+ app/service/__pycache__/rag_service.cpython-312.pyc  | Bin [31m0[m -> [32m3153[m bytes
+ .../data_level0.bin                                  | Bin [31m0[m -> [32m26312704[m bytes
+ .../43ece772-753a-4e9d-b1cb-2c02e094c99d/header.bin  | Bin [31m0[m -> [32m100[m bytes
+ .../index_metadata.pickle                            | Bin [31m0[m -> [32m325620[m bytes
+ .../43ece772-753a-4e9d-b1cb-2c02e094c99d/length.bin  | Bin [31m0[m -> [32m32768[m bytes
+ .../link_lists.bin                                   | Bin [31m0[m -> [32m71120[m bytes
+ data/vector_db/chroma.sqlite3                        | Bin [31m0[m -> [32m67813376[m bytes
+ tests/__pycache__/__init__.cpython-312.pyc           | Bin [31m0[m -> [32m196[m bytes
+ .../test_api.cpython-312-pytest-9.1.1.pyc            | Bin [31m0[m -> [32m30262[m bytes
+ 45 files changed, 13 insertions(+)
