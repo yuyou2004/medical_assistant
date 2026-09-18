@@ -1,0 +1,57 @@
+# 开发/部署编排：MySQL（业务数据）+ Redis（缓存/会话）+ API 服务
+# 用法：docker compose -f docker/docker-compose.yml up -d mysql redis
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: medical_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: medical123456
+      MYSQL_DATABASE: medical_assistant
+    ports:
+      - "3307:3306"  # 宿主 3307：本机 3306 常被 Windows 侧 MySQL 占用（WSL2 端口转发冲突）
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pmedical123456"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: medical_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: medical_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      MYSQL_PASSWORD: medical123456
+      MYSQL_DB: medical_assistant
+      MYSQL_ENABLED: "1"
+      HF_ENDPOINT: https://hf-mirror.com
+      HF_HUB_DISABLE_XET: "1"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  mysql_data:
+  redis_data:

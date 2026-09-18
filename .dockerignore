@@ -1,0 +1,9 @@
+# 版权 PDF 与向量库不进镜像（知识库在宿主机或挂载卷中管理）
+*.pdf
+data/
+.venv/
+__pycache__/
+*.pyc
+.env
+.git/
+.pytest_cache/

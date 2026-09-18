@@ -1,0 +1,24 @@
+[project]
+name = "medical-assistant"
+version = "0.1.0"
+description = "多智能体协同 RAG 医疗咨询助手"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "openai>=1.51.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.9.0",
+    "pymysql>=1.2.0",
+    "langchain>=0.3.0",
+    "langchain-text-splitters>=0.3.0",
+    "langchain-chroma>=0.2.0",
+    "fastembed>=0.8.0",
+    "pymupdf>=1.24.0",
+    "httpx>=0.27.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
