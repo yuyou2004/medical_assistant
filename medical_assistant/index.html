@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>多智能体协同 RAG 医疗咨询助手</title>
+  <title>ClinicMind Health Assistant</title>
+
+  <!-- 字体：Inter（拉丁/数字）+ Noto Sans SC（中文），工整高级的无衬线字族 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- CDN 引入 Tailwind CSS v3（无需本地依赖） -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,9 +17,9 @@
       theme: {
         extend: {
           colors: {
-            primary: '#165DFF',        // 主色：柔和科技蓝
-            'primary-dark': '#0E42D2',
-            'primary-light': '#E8F3FF',// 辅助浅蓝
+            primary: '#5B2C6F',        // 主色：手术服深紫
+            'primary-dark': '#452256',
+            'primary-light': '#F1EAF6',// 辅助浅紫（标签/浅底）
             'text-main': '#1D2129',
             'text-sub': '#6E7681',
             danger: '#F53F3F'
@@ -27,15 +32,18 @@
   <style>
     * { -webkit-tap-highlight-color: transparent; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", "Helvetica Neue", sans-serif;
+      text-rendering: optimizeLegibility;
     }
+    /* 标题与品牌名：轻微收紧字距，更显工整高级 */
+    h1, h2, h3 { letter-spacing: -0.01em; }
     /* 移动端视口高度：100dvh 避免键盘弹出遮挡输入框，100vh 兜底兼容旧浏览器 */
     .app-height { height: 100vh; height: 100dvh; }
 
     /* 滚动条美化 */
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #D3DAE6; border-radius: 9999px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #B8C2D0; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 
     /* AI 打字加载动画（三个点跳动） */
@@ -49,7 +57,7 @@
   </style>
 </head>
 
-<body class="app-height bg-[#F7F9FC] text-text-main antialiased overflow-hidden flex flex-col">
+<body class="app-height bg-[#F8F9FB] text-text-main antialiased overflow-hidden flex flex-col">
   <!-- ==================== 顶部导航栏 ==================== -->
   <header class="h-16 shrink-0 bg-white/90 backdrop-blur border-b border-gray-100 flex items-center px-3 sm:px-5 gap-2 z-20">
     <!-- 手机端汉堡按钮（展开历史侧边栏） -->
@@ -67,7 +75,7 @@
         </svg>
       </div>
       <div class="leading-tight min-w-0">
-        <p class="font-semibold text-[15px] truncate">多智能体协同 RAG 医疗咨询助手</p>
+        <p class="font-semibold text-[15px] tracking-tight truncate">ClinicMind Health Assistant</p>
         <p class="text-[11px] text-text-sub truncate">AI 健康科普 · 在线咨询</p>
       </div>
     </div>
@@ -132,7 +140,7 @@
     </aside>
 
     <!-- ② 中间聊天主体 -->
-    <main class="flex-1 flex flex-col min-w-0 bg-[#F7F9FC]">
+    <main class="flex-1 flex flex-col min-w-0 bg-[#F8F9FB]">
 
       <!-- 消息滚动区 -->
       <div id="messageArea" class="flex-1 overflow-y-auto custom-scroll px-4 py-6">
@@ -142,7 +150,7 @@
       <!-- 底部输入区 -->
       <div class="shrink-0 bg-white border-t border-gray-100" style="padding-bottom: env(safe-area-inset-bottom);">
         <div class="max-w-3xl mx-auto px-3 sm:px-4 pt-3 pb-2">
-          <div class="flex items-end gap-2 bg-[#FAFCFF] rounded-2xl border border-gray-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 p-2 transition">
+          <div class="flex items-end gap-2 bg-[#F8F9FB] rounded-2xl border border-gray-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 p-2 transition">
             <!-- 多行自适应输入框 -->
             <textarea id="input" rows="1" placeholder="请输入您的健康问题，如：最近总是头痛怎么办？"
               class="flex-1 resize-none bg-transparent outline-none text-sm text-text-main placeholder:text-text-sub/70 leading-relaxed py-2 px-2 max-h-[140px]"></textarea>
@@ -276,7 +284,7 @@
             </div>
             <div class="max-w-[85%] sm:max-w-[75%]">
               <div class="bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100 px-4 py-3">
-                <p class="text-[11px] font-medium text-primary mb-1">AI 医疗助手</p>
+                <p class="text-[11px] font-medium text-primary mb-1">ClinicMind 医疗助手</p>
                 <p class="text-sm leading-relaxed whitespace-pre-wrap break-words text-text-main">${escapeHtml(m.content)}</p>
                 <p class="text-[10px] text-text-sub text-right mt-1.5">${formatTime(m.time)}</p>
               </div>
@@ -316,7 +324,7 @@
                 <path d="M12 5v14M5 12h14"/>
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-text-main">你好，我是 AI 医疗助手</h3>
+            <h3 class="text-lg font-semibold text-text-main">你好，我是 ClinicMind 医疗助手</h3>
             <p class="text-sm text-text-sub mt-2 max-w-sm leading-relaxed">基于多智能体协同 + RAG 检索增强的医疗健康咨询服务，请描述您的健康疑问。</p>
             <div class="flex flex-wrap justify-center gap-2 mt-6">
               ${chips.map(c => `<button data-chip class="text-xs sm:text-sm px-4 py-2 rounded-full bg-white border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/40 transition">${c}</button>`).join('')}
