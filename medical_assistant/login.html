@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>登录 · 多智能体协同 RAG 医疗咨询助手</title>
+
+  <!-- CDN 引入 Tailwind CSS v3（无需本地依赖） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 自定义主题色：高级医疗风配色 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',        // 主色：柔和科技蓝
+            'primary-dark': '#0E42D2', // 主色加深（hover）
+            'primary-light': '#E8F3FF',// 辅助浅蓝
+            'text-main': '#1D2129',    // 文字主色
+            'text-sub': '#6E7681',     // 次要文字
+            danger: '#F53F3F'          // 危险提示色
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    }
+    /* 卡片入场动画 */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp .5s ease both; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-[#F7F9FC] text-text-main antialiased overflow-x-hidden">
+  <!-- 背景：柔和医疗蓝渐变 + 光斑装饰 -->
+  <div class="fixed inset-0 -z-10 bg-gradient-to-br from-[#F7F9FC] via-[#EEF5FF] to-[#E8F3FF]"></div>
+  <div class="fixed -z-10 top-[-120px] right-[-80px] w-[340px] h-[340px] rounded-full bg-primary-light opacity-70 blur-3xl"></div>
+  <div class="fixed -z-10 bottom-[-120px] left-[-80px] w-[320px] h-[320px] rounded-full bg-[#D6E7FF] opacity-60 blur-3xl"></div>
+
+  <div class="min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-md animate-fade-up">
+
+      <!-- 登录卡片 -->
+      <div class="bg-white rounded-2xl shadow-[0_18px_50px_-12px_rgba(22,93,255,0.25)] p-8 sm:p-10">
+
+        <!-- Logo + 标题 -->
+        <div class="flex flex-col items-center text-center mb-8">
+          <div class="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30 mb-4">
+            <!-- 医疗十字图标（内联 SVG） -->
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-bold text-text-main">多智能体协同 RAG 医疗咨询助手</h1>
+          <p class="text-sm text-text-sub mt-2">基于多 Agent + RAG 的智能健康咨询服务</p>
+
+          <!-- 功能标签 -->
+          <div class="flex flex-wrap justify-center gap-2 mt-4">
+            <span class="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary">多智能体协同</span>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary">RAG 检索增强</span>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary">医疗咨询</span>
+          </div>
+        </div>
+
+        <!-- 登录表单 -->
+        <form id="loginForm" class="space-y-5" novalidate>
+          <div>
+            <label for="username" class="block text-sm font-medium mb-2 text-text-main">用户名</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-sub">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input id="username" type="text" autocomplete="username"
+                class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-[#FAFCFF] text-sm text-text-main placeholder:text-text-sub/70 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder="请输入用户名" />
+            </div>
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-medium mb-2 text-text-main">密码</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-sub">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input id="password" type="password" autocomplete="current-password"
+                class="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 bg-[#FAFCFF] text-sm text-text-main placeholder:text-text-sub/70 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder="请输入密码" />
+              <!-- 密码显示/隐藏切换 -->
+              <button type="button" id="togglePwd" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-sub hover:text-primary transition" aria-label="显示/隐藏密码">
+                <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 错误提示 -->
+          <p id="errorMsg" class="hidden text-sm text-danger"></p>
+
+          <button id="loginBtn" type="submit"
+            class="w-full py-3 rounded-xl bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-medium text-[15px] shadow-lg shadow-primary/30 transition disabled:opacity-60 disabled:cursor-not-allowed">
+            登 录
+          </button>
+        </form>
+
+        <!-- 演示环境提示 -->
+        <div class="mt-6 text-center text-xs text-text-sub bg-primary-light/60 rounded-xl p-3 leading-relaxed">
+          演示环境：任意用户名与密码即可登录（前端模拟鉴权）
+        </div>
+      </div>
+
+      <!-- 底部安全提示 -->
+      <p class="text-center text-xs text-text-sub mt-6 px-4 leading-relaxed">
+        ⚠️ 本产品仅供健康科普参考，不构成医疗诊断，如有身体不适请及时线下就医
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      // ================== 登录鉴权（前端模拟） ==================
+      const TOKEN_KEY = 'rag_med_token';   // localStorage 中保存 token 的 key
+      const USER_KEY  = 'rag_med_username'; // localStorage 中保存用户名的 key
+
+      // 已登录则直接跳转聊天页，避免重复登录
+      if (localStorage.getItem(TOKEN_KEY)) {
+        window.location.replace('index.html');
+        return;
+      }
+
+      const form = document.getElementById('loginForm');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const errorMsg = document.getElementById('errorMsg');
+      const loginBtn = document.getElementById('loginBtn');
+
+      // 根据用户名生成稳定的 token：
+      // 同一用户名在任意浏览器/设备登录得到的 token 相同，
+      // 从而模拟“多设备登录看到同一份历史会话”的效果。
+      function hashToken(str) {
+        let h = 5381;
+        for (let i = 0; i < str.length; i++) {
+          h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+        }
+        return 'tk_' + h.toString(16);
+      }
+
+      function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.remove('hidden');
+      }
+      function hideError() { errorMsg.classList.add('hidden'); }
+
+      // 密码显示/隐藏
+      const togglePwd = document.getElementById('togglePwd');
+      const eyeIcon = document.getElementById('eyeIcon');
+      togglePwd.addEventListener('click', () => {
+        const isPwd = passwordInput.type === 'password';
+        passwordInput.type = isPwd ? 'text' : 'password';
+        eyeIcon.innerHTML = isPwd
+          ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12A3 3 0 1 1 9.88 9.88"/><line x1="1" y1="1" x2="23" y2="23"/>'
+          : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      });
+
+      // 提交登录
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideError();
+
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+
+        // 简单前端校验
+        if (!username) { showError('请输入用户名'); usernameInput.focus(); return; }
+        if (!password) { showError('请输入密码'); passwordInput.focus(); return; }
+
+        // 按钮进入加载态
+        loginBtn.disabled = true;
+        loginBtn.textContent = '登录中…';
+
+        try {
+          // ============【这里对接后端API】============
+          // 真实后端接入示例（对接 FastAPI 多 Agent 医疗后端）：
+          //
+          // const res = await fetch('/api/auth/login', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ username, password })
+          // });
+          // const data = await res.json();
+          // if (!res.ok) { showError(data.detail || '登录失败'); return; }
+          // localStorage.setItem(TOKEN_KEY, data.access_token);
+          // localStorage.setItem(USER_KEY, data.username);
+          // window.location.replace('index.html');
+          // ===========================================
+
+          // 前端模拟登录：延迟模拟网络请求
+          await new Promise(resolve => setTimeout(resolve, 600));
+          const token = hashToken(username); // 模拟后端签发的 token
+          localStorage.setItem(TOKEN_KEY, token);
+          localStorage.setItem(USER_KEY, username);
+          window.location.replace('index.html');
+        } catch (err) {
+          showError('登录失败，请重试');
+          loginBtn.disabled = false;
+          loginBtn.textContent = '登 录';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
