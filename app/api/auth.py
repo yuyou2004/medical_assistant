@@ -4,7 +4,7 @@ import secrets
 import threading
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from app.config import settings
@@ -75,3 +75,37 @@ def check_token(token: str | None) -> str | None:
     if info and info["expires_at"] > time.time():
         return info["username"]
     return None
+
+
+def _extract_token(authorization: str | None) -> str | None:
+    """从 Authorization 头解析 Bearer 令牌"""
+    if not authorization:
+        return None
+    parts = authorization.split()
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1]
+    return None
+
+
+def get_current_user(authorization: str | None = Header(default=None)) -> str:
+    """FastAPI 依赖：校验 Bearer 令牌，返回当前用户名（未登录抛 401）"""
+    username = check_token(_extract_token(authorization))
+    if username is None:
+        raise HTTPException(status_code=401, detail="未登录或登录已过期")
+    return username
+
+
+@router.get("/me")
+def me(username: str = Depends(get_current_user)) -> dict:
+    """当前登录用户信息（前端首屏用于校验本地令牌是否有效）"""
+    return {"username": username}
+
+
+@router.post("/logout")
+def logout(authorization: str | None = Header(default=None)) -> dict:
+    """退出登录：吊销令牌（服务重启后令牌本身也会失效）"""
+    token = _extract_token(authorization)
+    if token:
+        with _tokens_lock:
+            _tokens.pop(token, None)
+    return {"message": "已退出登录"}

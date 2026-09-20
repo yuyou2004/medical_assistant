@@ -1,4 +1,4 @@
-﻿"""全局配置：从项目根目录的 .env 文件读取环境变量"""
+"""全局配置：从项目根目录的 .env 文件读取环境变量"""
 import os
 from pathlib import Path
 
@@ -41,6 +41,13 @@ RERANK_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
 RERANK_BASE_URL = os.getenv("SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1")
 RERANK_MODEL = os.getenv("RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
 RERANK_TOP_N = int(os.getenv("RERANK_TOP_N", "3"))  # 重排后保留的知识片段数
+
+# ---------- 视觉识别配置（图片问诊：复用 SiliconFlow 多模态视觉模型；不配 key 则图片问诊不可用） ----------
+VISION_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
+VISION_BASE_URL = os.getenv("SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1")
+VISION_MODEL = os.getenv("VISION_MODEL", "Qwen/Qwen2.5-VL-32B-Instruct")
+VISION_ENABLED = bool(VISION_API_KEY) and VISION_API_KEY != "sk-your-api-key-here"
+MAX_IMAGE_SIZE_MB = 8  # 图片上传大小上限（MB）
 
 # ---------- RAG 知识库配置 ----------
 RAG_PDF_DIR = os.getenv("RAG_PDF_DIR", str(BASE_DIR / "app" / "rag"))  # 待建库 PDF 所在目录

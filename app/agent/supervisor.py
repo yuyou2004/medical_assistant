@@ -164,7 +164,8 @@ class SupervisorAgent(BaseAgent):
             "data": {
                 "name": "rag",
                 "description": rag_agent.description,
-                "result": rag_text[:500] + ("……" if len(rag_text) > 500 else ""),
+                # 检索结果全文下发：前端"会诊过程"面板折叠展示，让 RAG 检索过程对用户可见
+                "result": rag_text,
             },
         }
 
@@ -215,7 +216,8 @@ class SupervisorAgent(BaseAgent):
         rag_text = RagAgent.format_knowledge(rag_items)
         yield {
             "type": "agent",
-            "data": {"name": "rag", "description": rag_agent.description, "result": rag_text[:500] + ("……" if len(rag_text) > 500 else "")},
+            # 检索结果全文下发：前端"会诊过程"面板折叠展示，让 RAG 检索过程对用户可见
+            "data": {"name": "rag", "description": rag_agent.description, "result": rag_text},
         }
 
         # 知识问答专用提示词（不用问诊模板，避免出现"未提供血压数值"等问诊措辞）
