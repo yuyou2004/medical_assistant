@@ -261,3 +261,154 @@ def test_consultation_dao_persists():
     consultation_dao.save_message(sid, "user", "我头疼")
     messages = consultation_dao.load_messages(sid)
     assert messages and {"role": "user", "content": "我头疼"} in messages
+
+
+# ---------- M9 扩展：真实定位 / 健康数据趋势 / 用药提醒 / FAQ / 体检报告 ----------
+
+
+@pytest.mark.skipif(not settings.DB_ENABLED, reason="需启用 MySQL（MYSQL_ENABLED=1）")
+def test_hospitals_real_location():
+    """真实定位：提供经纬度后按 haversine 距离升序，且全部医院带真实坐标"""
+    from app.dao import db
+
+    db.init_db()
+    r = client.get("/api/hospitals", params={"lat": 30.246, "lng": 120.1645})  # 杭州市一附近
+    assert r.status_code == 200
+    body = r.json()
+    assert body["located"] is True and len(body["hospitals"]) >= 13
+    hospitals = body["hospitals"]
+    # 距离按真实经纬度计算并升序：最近的三家应都是杭州医院（不再出现深圳医院混排）
+    assert all(h["distance_km"] <= hospitals[3]["distance_km"] + 0.01 for h in hospitals[:3])
+    assert {h["city"] for h in hospitals[:3]} == {"杭州"}
+    assert hospitals[0]["distance_km"] < 10  # 与杭州市中心直线距离在几公里内
+    # 全部医院均有真实经纬度
+    assert all(h.get("lat") is not None and h.get("lng") is not None for h in hospitals)
+    # 不定位时 located=False，返回参考距离
+    r2 = client.get("/api/hospitals")
+    assert r2.json()["located"] is False
+
+
+def test_faq_endpoint():
+    """FAQ 分类浏览：全量返回分类与问答，按分类过滤生效"""
+    r = client.get("/api/faq")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["categories"]) >= 5
+    assert all(c["count"] >= 3 for c in body["categories"])
+    assert len(body["questions"]) >= 15
+    r2 = client.get("/api/faq", params={"category": "medication"})
+    assert r2.status_code == 200
+    med_qs = r2.json()["questions"]
+    med_count = next(c["count"] for c in body["categories"] if c["id"] == "medication")
+    assert len(med_qs) == med_count >= 3
+    assert all("q" in q and "a" in q for q in med_qs)
+    r3 = client.get("/api/faq", params={"category": "not-exist"})
+    assert r3.json()["questions"] == []
+
+
+def test_report_requires_input():
+    """报告解读：无文本无文件返回 400"""
+    r = client.post("/api/report/analyze", data={})
+    assert r.status_code == 400
+
+
+def test_report_image_requires_vision_key():
+    """报告图片解读依赖视觉模型 key（本环境未配置 → 503 配置指引）"""
+    import io
+
+    r = client.post(
+        "/api/report/analyze",
+        files={"file": ("report.jpg", io.BytesIO(b"fake-image-bytes"), "image/jpeg")},
+    )
+    assert r.status_code == 503
+    assert "SILICONFLOW_API_KEY" in r.json()["detail"]
+
+
+@pytest.mark.skipif(not settings.DB_ENABLED, reason="需启用 MySQL（MYSQL_ENABLED=1）")
+def test_health_records_flow():
+    """健康数据趋势：写入 → 查询（日期升序）→ 最新值 → 删除"""
+    from app.dao import db
+
+    db.init_db()
+    username = f"测试_{secrets.token_hex(4)}"
+    client.post("/api/auth/register", json={"username": username, "password": "pass123456"})
+    token = client.post(
+        "/api/auth/login", json={"username": username, "password": "pass123456"}
+    ).json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 参数校验：类型/数值范围
+    assert client.post("/api/health/records", headers=headers,
+                       json={"record_type": "height", "value": 70}).status_code == 400
+    assert client.post("/api/health/records", headers=headers,
+                       json={"record_type": "weight", "value": 9999}).status_code == 400
+
+    r = client.post("/api/health/records", headers=headers,
+                    json={"record_type": "weight", "value": 72.5, "note": "晨起空腹"})
+    assert r.status_code == 200, r.text
+    # 同日期同类型覆盖旧值
+    client.post("/api/health/records", headers=headers,
+                json={"record_type": "weight", "value": 72.0})
+    client.post("/api/health/records", headers=headers,
+                json={"record_type": "systolic", "value": 128})
+
+    r = client.get("/api/health/records", headers=headers, params={"record_type": "weight"})
+    records = r.json()["records"]
+    assert len(records) == 1 and records[0]["value"] == 72.0
+
+    latest = client.get("/api/health/summary", headers=headers).json()["latest"]
+    assert latest["weight"]["value"] == 72.0 and latest["systolic"]["value"] == 128
+
+    rid = records[0]["id"]
+    assert client.delete(f"/api/health/records/{rid}", headers=headers).status_code == 200
+    latest = client.get("/api/health/summary", headers=headers).json()["latest"]
+    assert "weight" not in latest and latest["systolic"]["value"] == 128
+
+
+@pytest.mark.skipif(not settings.DB_ENABLED, reason="需启用 MySQL（MYSQL_ENABLED=1）")
+def test_medication_flow():
+    """用药提醒：建计划 → 今日清单 → 打卡 → 停用 → 删除"""
+    from app.dao import db
+
+    db.init_db()
+    username = f"测试_{secrets.token_hex(4)}"
+    client.post("/api/auth/register", json={"username": username, "password": "pass123456"})
+    token = client.post(
+        "/api/auth/login", json={"username": username, "password": "pass123456"}
+    ).json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 校验：时间点数量与次数不一致 → 400
+    r = client.post("/api/medications", headers=headers, json={
+        "medicine_name": "阿莫西林", "times_per_day": 2, "time_points": ["08:00"],
+    })
+    assert r.status_code == 400
+
+    r = client.post("/api/medications", headers=headers, json={
+        "medicine_name": "阿莫西林", "times_per_day": 2,
+        "time_points": ["08:00", "20:00"], "note": "饭后服用",
+    })
+    assert r.status_code == 200, r.text
+    med_id = r.json()["medication_id"]
+
+    # 今日清单：2 项均未打卡
+    checklist = client.get("/api/medications/checklist/today", headers=headers).json()
+    assert checklist["total"] == 2 and checklist["taken"] == 0
+
+    # 打卡：成功；重复打卡幂等；时段不在计划内 → 400
+    r = client.post("/api/medications/logs", headers=headers,
+                    json={"medication_id": med_id, "time_point": "08:00"})
+    assert r.status_code == 200 and r.json()["taken"] == 1
+    client.post("/api/medications/logs", headers=headers,
+                json={"medication_id": med_id, "time_point": "08:00"})
+    checklist = client.get("/api/medications/checklist/today", headers=headers).json()
+    assert checklist["taken"] == 1
+    assert client.post("/api/medications/logs", headers=headers,
+                       json={"medication_id": med_id, "time_point": "12:00"}).status_code == 400
+
+    # 停用后今日清单为空；删除后计划不存在
+    r = client.put(f"/api/medications/{med_id}", headers=headers, json={"active": False})
+    assert r.status_code == 200
+    assert client.get("/api/medications/checklist/today", headers=headers).json()["total"] == 0
+    assert client.delete(f"/api/medications/{med_id}", headers=headers).status_code == 200
+    assert client.delete(f"/api/medications/{med_id}", headers=headers).status_code == 404

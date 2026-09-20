@@ -26,80 +26,96 @@
   </script>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-primary-light via-white to-blue-50 flex items-center justify-center p-4"
+<body class="min-h-screen bg-[#F7F9FC] flex flex-col"
       style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;">
-  <div class="w-full max-w-md">
-    <!-- Logo -->
-    <div class="text-center mb-6">
-      <div class="w-14 h-14 rounded-2xl bg-primary mx-auto flex items-center justify-center text-white shadow-lg shadow-primary/30">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-      </div>
-      <h1 class="text-xl font-semibold text-text-main mt-4">多智能体协同 RAG 医疗咨询助手</h1>
-      <p class="text-sm text-text-sub mt-1.5">AI 健康科普 · 在线咨询</p>
-    </div>
-
-    <!-- 登录卡片 -->
-    <div class="bg-white rounded-2xl shadow-xl shadow-primary/5 border border-gray-100 p-6 sm:p-8">
-      <!-- 登录 / 注册切换 -->
-      <div class="flex bg-gray-100 rounded-xl p-1 mb-6">
-        <button id="loginTab" class="flex-1 py-2 rounded-lg text-sm font-medium bg-white text-primary shadow-sm transition">登录</button>
-        <button id="registerTab" class="flex-1 py-2 rounded-lg text-sm font-medium text-text-sub hover:text-text-main transition">注册</button>
+  <main class="flex-1 flex items-center justify-center p-4 py-10">
+    <div class="w-full max-w-md">
+      <!-- 品牌区 -->
+      <div class="text-center mb-7">
+        <div class="w-14 h-14 rounded-2xl bg-primary-light flex items-center justify-center text-primary mx-auto mb-4">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <h1 class="text-xl font-semibold text-text-main tracking-tight">多智能体协同 RAG 医疗咨询助手</h1>
+        <p class="text-sm text-text-sub mt-1.5">会诊流程透明 · 教材知识库检索 · 医疗服务一站直达</p>
       </div>
 
-      <!-- 表单 -->
-      <form id="authForm" autocomplete="off">
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm text-text-main font-medium mb-1.5">用户名</label>
-            <input id="username" type="text" maxlength="20" placeholder="2-20 位字母、数字、下划线或中文"
-              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
-          </div>
-          <div>
-            <label class="block text-sm text-text-main font-medium mb-1.5">密码</label>
-            <div class="relative">
-              <input id="password" type="password" maxlength="64" placeholder="6-64 位字符"
-                class="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
-              <!-- 显示 / 隐藏密码 -->
-              <button type="button" id="togglePwd" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-sub hover:text-primary transition" aria-label="显示密码">
-                <svg id="eyeOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                </svg>
-                <svg id="eyeClosed" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <!-- 注册专用：确认密码 -->
-          <div id="confirmWrap" class="hidden">
-            <label class="block text-sm text-text-main font-medium mb-1.5">确认密码</label>
-            <input id="confirmPwd" type="password" maxlength="64" placeholder="再次输入密码"
-              class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
-          </div>
+      <!-- 登录卡片 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+        <!-- 登录 / 注册切换 -->
+        <div class="flex bg-gray-100 rounded-xl p-1 mb-6">
+          <button id="loginTab" class="flex-1 py-2 rounded-lg text-sm font-medium bg-white text-primary shadow-sm transition">登录</button>
+          <button id="registerTab" class="flex-1 py-2 rounded-lg text-sm font-medium text-text-sub hover:text-text-main transition">注册</button>
         </div>
 
-        <!-- 错误提示 -->
-        <p id="errorMsg" class="hidden text-danger text-xs mt-3 bg-red-50 rounded-lg px-3 py-2 leading-relaxed"></p>
+        <!-- 表单 -->
+        <form id="authForm" autocomplete="off">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm text-text-main font-medium mb-1.5">用户名</label>
+              <input id="username" type="text" maxlength="20" placeholder="2-20 位字母、数字、下划线或中文"
+                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
+            </div>
+            <div>
+              <label class="block text-sm text-text-main font-medium mb-1.5">密码</label>
+              <div class="relative">
+                <input id="password" type="password" maxlength="64" placeholder="6-64 位字符"
+                  class="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
+                <!-- 显示 / 隐藏密码 -->
+                <button type="button" id="togglePwd" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-sub hover:text-primary transition" aria-label="显示密码">
+                  <svg id="eyeOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg id="eyeClosed" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <!-- 注册专用：确认密码 -->
+            <div id="confirmWrap" class="hidden">
+              <label class="block text-sm text-text-main font-medium mb-1.5">确认密码</label>
+              <input id="confirmPwd" type="password" maxlength="64" placeholder="再次输入密码"
+                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
+            </div>
+          </div>
 
-        <!-- 提交按钮 -->
-        <button type="submit" id="submitBtn"
-          class="w-full mt-6 py-3 rounded-xl bg-primary hover:bg-primary-dark active:scale-[0.98] text-white text-sm font-semibold shadow-lg shadow-primary/25 transition disabled:opacity-60 disabled:active:scale-100">
-          登 录
+          <!-- 错误提示 -->
+          <p id="errorMsg" class="hidden text-danger text-xs mt-3 bg-red-50 rounded-lg px-3 py-2 leading-relaxed"></p>
+
+          <!-- 提交按钮 -->
+          <button type="submit" id="submitBtn"
+            class="w-full mt-6 py-3 rounded-xl bg-primary hover:bg-primary-dark active:scale-[0.98] text-white text-sm font-semibold shadow-md shadow-primary/25 transition disabled:opacity-60 disabled:active:scale-100">
+            登 录
+          </button>
+        </form>
+
+        <!-- 访客入口（无需注册，本地体验） -->
+        <button id="guestBtn" class="w-full mt-3 py-2.5 rounded-xl border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/30 text-sm transition">
+          暂不登录，以访客身份进入 →
         </button>
-      </form>
+      </div>
 
-      <!-- 访客入口（无需注册，本地体验） -->
-      <button id="guestBtn" class="w-full mt-3 py-2.5 rounded-xl border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/30 text-sm transition">
-        暂不登录，以访客身份进入 →
-      </button>
+      <!-- 功能一览（登录后可用） -->
+      <div class="flex flex-wrap justify-center gap-1.5 mt-6">
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">智能问答</span>
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">多智能体会诊</span>
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">知识库检索</span>
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">预约挂号</span>
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">附近医院</span>
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">体检报告解读</span>
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">用药提醒</span>
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">健康数据趋势</span>
+        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">常见问题</span>
+      </div>
+
+      <p class="flex items-start justify-center gap-1.5 text-center text-[11px] text-text-sub mt-6 leading-relaxed px-4">
+        <svg class="shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>AI 医疗助手仅提供健康科普参考，不构成医疗诊断，如有身体不适，请及时前往医院就诊。</span>
+      </p>
     </div>
-
-    <p class="text-center text-[11px] text-text-sub mt-5 leading-relaxed px-4">
-      ⚠️ AI医疗助手仅提供健康科普参考，不构成医疗诊断，如有身体不适，请及时前往医院就诊。
-    </p>
-  </div>
+  </main>
 
   <script>
     (function () {

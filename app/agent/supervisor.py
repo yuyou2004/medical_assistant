@@ -19,7 +19,6 @@ from typing import Any, Iterator
 from app.agent import get_agent, list_agents
 from app.agent.answer_agent import AnswerAgent
 from app.agent.base import BaseAgent
-from app.agent.rag_agent import RagAgent
 from app.config import settings
 from app.config.prompt import AGENT_PLAN_PROMPT, KNOWLEDGE_ANSWER_PROMPT, SUPERVISOR_PROMPT
 from app.service import llm_service
@@ -112,6 +111,8 @@ class SupervisorAgent(BaseAgent):
 
     def _consultation_flow(self, user_input: str, history: list[dict], plan: dict) -> Iterator[dict]:
         """症状咨询主流程：问诊 → （信息不足则追问）→ 并行分析 → 专科 → 综合回答"""
+        from app.agent.rag_agent import RagAgent  # 懒加载：RAG 依赖首次真正检索时才导入
+
         results: dict[str, Any] = {}
 
         # 2. 问诊 Agent：收集信息、判断是否完整
@@ -138,7 +139,7 @@ class SupervisorAgent(BaseAgent):
             return
 
         # 3. 并行执行：症状分析 + RAG 检索 + 风险评估
-        rag_agent: RagAgent = get_agent("rag")
+        rag_agent = get_agent("rag")
         risk_ctx = json.dumps(
             {"对话": history, "用户最新输入": user_input, "问诊收集": inquiry_result},
             ensure_ascii=False,
@@ -211,7 +212,9 @@ class SupervisorAgent(BaseAgent):
 
     def _knowledge_flow(self, user_input: str, history: list[dict], plan: dict) -> Iterator[dict]:
         """知识类问题捷径：RAG 检索 → 综合回答"""
-        rag_agent: RagAgent = get_agent("rag")
+        from app.agent.rag_agent import RagAgent  # 懒加载：RAG 依赖首次真正检索时才导入
+
+        rag_agent = get_agent("rag")
         rag_items = rag_agent.search(user_input)
         rag_text = RagAgent.format_knowledge(rag_items)
         yield {

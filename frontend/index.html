@@ -60,12 +60,32 @@
     .line-clamp-4 {
       display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
     }
+
+    /* 功能菜单弹出动画 */
+    @keyframes menuIn {
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .menu-panel { animation: menuIn 0.16s ease-out; }
+
+    /* ---------- 图表设计变量（数据可视化规范：浅色主题） ---------- */
+    .viz-root {
+      color-scheme: light;
+      --surface-1:      #fcfcfb;   /* 图表表面 */
+      --text-primary:   #0b0b0b;
+      --text-secondary: #52514e;
+      --muted:          #898781;   /* 轴/标签 */
+      --series-1:       #2a78d6;   /* 单序列蓝 */
+      --grid-line:      #e1e0d9;   /* 网格线（hairline） */
+      --axis:           #c3c2b7;   /* 基线/坐标轴 */
+      --ring:           #fcfcfb;   /* 标记点表面描边 */
+    }
   </style>
 </head>
 
 <body class="app-height bg-[#F7F9FC] text-text-main antialiased overflow-hidden flex flex-col">
   <!-- ==================== 顶部导航栏 ==================== -->
-  <header class="h-16 shrink-0 bg-white/90 backdrop-blur border-b border-gray-100 flex items-center px-3 sm:px-5 gap-2 z-20">
+  <header class="h-16 shrink-0 bg-white/90 backdrop-blur border-b border-gray-100 flex items-center px-3 sm:px-5 gap-2 z-20 relative">
     <!-- 手机端汉堡按钮（展开历史侧边栏） -->
     <button id="menuBtn" class="md:hidden p-2 rounded-lg text-text-main hover:bg-primary-light transition" aria-label="打开历史会话">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -73,8 +93,8 @@
       </svg>
     </button>
 
-    <!-- Logo + 应用名 -->
-    <div class="flex items-center gap-2.5 min-w-0">
+    <!-- Logo + 应用名（点击回首页） -->
+    <button id="logoBtn" class="flex items-center gap-2.5 min-w-0 text-left" title="返回首页">
       <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white shadow-md shadow-primary/25 shrink-0">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
           <path d="M12 5v14M5 12h14"/>
@@ -84,9 +104,23 @@
         <p class="font-semibold text-[15px] truncate">多智能体协同 RAG 医疗咨询助手</p>
         <p class="text-[11px] text-text-sub truncate">AI 健康科普 · 在线咨询</p>
       </div>
-    </div>
+    </button>
 
     <div class="flex-1"></div>
+
+    <!-- 右上角：全部功能入口 -->
+    <div class="relative shrink-0">
+      <button id="featureBtn" class="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg text-text-main hover:bg-gray-50 border border-gray-200 transition" title="全部功能">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        </svg>
+        <span class="hidden sm:inline font-medium">功能</span>
+      </button>
+      <!-- 功能菜单（全部功能入口，分组展示） -->
+      <div id="featureMenu" class="hidden menu-panel absolute right-0 top-12 w-[320px] sm:w-[400px] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50 max-h-[70vh] overflow-y-auto custom-scroll">
+        <div id="featureMenuBody"></div>
+      </div>
+    </div>
 
     <!-- 右上角用户区 -->
     <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -103,58 +137,10 @@
     </div>
   </header>
 
-  <!-- ==================== 功能模式切换条（两行：咨询 / 服务） ==================== -->
-  <nav class="shrink-0 bg-white border-b border-gray-100 px-3 sm:px-5">
-    <!-- 第一行：AI 咨询 -->
-    <div class="max-w-3xl mx-auto flex gap-1.5 pt-2">
-      <button id="tabChat" data-mode="chat"
-        class="flex-1 sm:flex-none sm:px-6 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 bg-primary text-white shadow-md shadow-primary/25">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-        <span class="hidden xs:inline sm:inline">智能问答</span>
-        <span class="sm:hidden">问答</span>
-      </button>
-      <button id="tabAgent" data-mode="agent"
-        class="flex-1 sm:flex-none sm:px-6 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 text-text-sub hover:bg-gray-50">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-        多智能体会诊
-      </button>
-      <button id="tabSearch" data-mode="search"
-        class="flex-1 sm:flex-none sm:px-6 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 text-text-sub hover:bg-gray-50">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        知识库检索
-      </button>
-    </div>
-    <!-- 第二行：医疗服务 -->
-    <div class="max-w-3xl mx-auto flex gap-1.5 py-2">
-      <button id="tabAppt" data-mode="appt"
-        class="flex-1 sm:flex-none sm:px-5 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 text-text-sub hover:bg-gray-50">
-        <span>🏥</span>预约挂号
-      </button>
-      <button id="tabHospital" data-mode="hospital"
-        class="flex-1 sm:flex-none sm:px-5 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 text-text-sub hover:bg-gray-50">
-        <span>📍</span>附近医院
-      </button>
-      <button id="tabVision" data-mode="vision"
-        class="flex-1 sm:flex-none sm:px-5 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 text-text-sub hover:bg-gray-50">
-        <span>📷</span>图片问诊
-      </button>
-      <button id="tabProfile" data-mode="profile"
-        class="flex-1 sm:flex-none sm:px-5 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 text-text-sub hover:bg-gray-50">
-        <span>👤</span>健康档案
-      </button>
-    </div>
-  </nav>
-
   <!-- ==================== 主体区域 ==================== -->
   <div class="flex flex-1 overflow-hidden relative">
 
-    <!-- 手机端遮罩层（点击空白关闭侧边栏） -->
+    <!-- 手机端遮罩层（点击空白关闭侧边栏/功能菜单） -->
     <div id="overlay" class="fixed inset-0 bg-black/40 z-30 hidden md:hidden"></div>
 
     <!-- ① 左侧历史会话侧边栏（PC 永久展开 / 手机抽屉） -->
@@ -162,12 +148,7 @@
       class="fixed md:static inset-y-0 left-0 z-40 w-[280px] md:w-72 bg-white border-r border-gray-100 flex flex-col shrink-0 transition-transform duration-300 -translate-x-full md:translate-x-0">
       <div class="p-4 border-b border-gray-100">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="font-semibold text-[15px] flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3v18M3 12h18"/>
-            </svg>
-            历史会话
-          </h2>
+          <h2 class="font-semibold text-[15px]">历史会话</h2>
           <!-- 手机端关闭按钮 -->
           <button id="closeSidebarBtn" class="md:hidden p-2 rounded-lg text-text-sub hover:bg-gray-100 transition" aria-label="关闭">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -193,7 +174,7 @@
       <div id="sessionList" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-1.5"></div>
     </aside>
 
-    <!-- ② 中间聊天主体 -->
+    <!-- ② 中间内容主体 -->
     <main class="flex-1 flex flex-col min-w-0 bg-[#F7F9FC]">
 
       <!-- 消息滚动区 -->
@@ -201,8 +182,8 @@
         <div id="messageContainer" class="max-w-3xl mx-auto space-y-5"></div>
       </div>
 
-      <!-- 底部输入区 -->
-      <div class="shrink-0 bg-white border-t border-gray-100" style="padding-bottom: env(safe-area-inset-bottom);">
+      <!-- 底部输入区（首页/服务模式隐藏） -->
+      <div id="bottomBar" class="hidden shrink-0 bg-white border-t border-gray-100" style="padding-bottom: env(safe-area-inset-bottom);">
         <div class="max-w-3xl mx-auto px-3 sm:px-4 pt-3 pb-2">
           <!-- 模式提示行 + 会诊携带健康档案开关 -->
           <div class="flex items-center justify-between mb-2 px-1 gap-2">
@@ -225,7 +206,7 @@
           </div>
           <!-- 永久固定安全提示 -->
           <p class="text-center text-[11px] text-text-sub mt-2 leading-relaxed">
-            ⚠️ AI医疗助手仅提供健康科普参考，不构成医疗诊断，如有身体不适，请及时前往医院就诊。
+            AI 医疗助手仅提供健康科普参考，不构成医疗诊断，如有身体不适，请及时前往医院就诊。
           </p>
         </div>
       </div>
@@ -248,55 +229,94 @@
       // 会话按 token 隔离存储（同一账号多设备共享；访客用 guest 隔离）
       const STORE_KEY = 'rag_med_sessions_' + (token || 'guest');
 
-      // ================== 功能模式（咨询 3 种 + 服务 4 种） ==================
+      // ================== 功能模式（首页 + 咨询 3 种 + 服务 7 种） ==================
       const MODE = {
+        HOME: 'home',
         CHAT: 'chat', AGENT: 'agent', SEARCH: 'search',
         APPT: 'appt', HOSPITAL: 'hospital', VISION: 'vision', PROFILE: 'profile',
+        REPORT: 'report', MEDS: 'meds', TRENDS: 'trends', FAQ: 'faq',
       };
-      let currentMode = MODE.CHAT;
+      let currentMode = MODE.HOME;
 
-      const SERVICE_MODES = [MODE.APPT, MODE.HOSPITAL, MODE.VISION, MODE.PROFILE];
+      // 无输入框模式：首页 + 全部服务面板
+      const SERVICE_MODES = [MODE.HOME, MODE.APPT, MODE.HOSPITAL, MODE.VISION, MODE.PROFILE,
+                             MODE.REPORT, MODE.MEDS, MODE.TRENDS, MODE.FAQ];
 
       const MODE_META = {
         [MODE.CHAT]: {
-          hint: '⚡ 智能问答：大模型直接快速回答日常健康问题（无多智能体流程）',
+          hint: '智能问答：大模型直接快速回答日常健康问题（无多智能体流程）',
           placeholder: '请输入您的健康问题，如：最近总是头痛怎么办？',
         },
         [MODE.AGENT]: {
-          hint: '🩺 多智能体会诊：Supervisor 组织 问诊→症状/RAG/风险并行分析→专科→综合回答 全流程',
+          hint: '多智能体会诊：Supervisor 组织 问诊→症状/RAG/风险并行分析→专科→综合回答 全流程',
           placeholder: '请描述您的症状，如：我最近总是头晕，持续三天了…',
         },
         [MODE.SEARCH]: {
-          hint: '📚 知识库检索：直接检索《内科学》《外科学》（第10版）教材知识库',
+          hint: '知识库检索：直接检索《内科学》《外科学》（第10版）教材知识库',
           placeholder: '输入医学关键词，如：高血压的饮食注意事项',
-        },
-        [MODE.APPT]: {
-          hint: '🏥 预约挂号：选择科室 → 医院排班 → 填写就诊人，生成挂号单（演示系统，无真实号源）',
-          placeholder: '',
-        },
-        [MODE.HOSPITAL]: {
-          hint: '📍 附近医院：按城市/区查询医院列表（内置演示数据，含模拟距离）',
-          placeholder: '',
-        },
-        [MODE.VISION]: {
-          hint: '📷 图片问诊：上传皮损/皮肤照片，视觉大模型识别并给出护理与就医建议',
-          placeholder: '',
-        },
-        [MODE.PROFILE]: {
-          hint: '👤 健康档案：填写病史/过敏史，多智能体会诊时自动携带（仅自己可见）',
-          placeholder: '',
         },
       };
 
-      // 会诊各 Agent 展示信息
+      // ================== 功能菜单配置（右上角"功能"入口，全部功能分组展示） ==================
+      const FEATURE_GROUPS = [
+        {
+          name: '智能咨询',
+          items: [
+            { mode: MODE.CHAT, label: '智能问答', desc: '大模型快速回答日常健康问题', icon: 'chat' },
+            { mode: MODE.AGENT, label: '多智能体会诊', desc: '6 个 Agent 协同的完整会诊流程', icon: 'users' },
+            { mode: MODE.SEARCH, label: '知识库检索', desc: '教材知识库向量检索，带原文页码', icon: 'search' },
+          ],
+        },
+        {
+          name: '医疗服务',
+          items: [
+            { mode: MODE.APPT, label: '预约挂号', desc: '科室 → 排班 → 挂号单', icon: 'calendar' },
+            { mode: MODE.HOSPITAL, label: '附近医院', desc: '真实定位，按距离排序', icon: 'pin' },
+            { mode: MODE.VISION, label: '图片问诊', desc: '上传皮损照片，视觉模型识别', icon: 'camera' },
+            { mode: MODE.REPORT, label: '体检报告解读', desc: '报告文本/图片逐项解读', icon: 'file' },
+          ],
+        },
+        {
+          name: '健康管理',
+          items: [
+            { mode: MODE.PROFILE, label: '健康档案', desc: '病史/过敏史，会诊时自动携带', icon: 'user' },
+            { mode: MODE.TRENDS, label: '健康数据趋势', desc: '体重/血压记录与趋势图', icon: 'trend' },
+            { mode: MODE.MEDS, label: '用药提醒', desc: '用药计划、打卡与到点通知', icon: 'bell' },
+          ],
+        },
+        {
+          name: '就医指南',
+          items: [
+            { mode: MODE.FAQ, label: '常见问题', desc: '预约/检查/用药/就医流程问答', icon: 'help' },
+          ],
+        },
+      ];
+
+      // 功能图标（统一线性 SVG，与首页卡片共用）
+      const ICONS = {
+        chat: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        users: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+        search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>',
+        calendar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>',
+        pin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        camera: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+        file: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+        user: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+        trend: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m23 6-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>',
+        bell: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+        help: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>',
+      };
+
+      // 会诊各 Agent 展示信息（过程面板）
       const AGENT_META = {
-        plan:      { label: '流程规划',   icon: '🧭' },
-        inquiry:   { label: '问诊分析',   icon: '🩺' },
-        symptom:   { label: '症状分析',   icon: '🔬' },
-        rag:       { label: '知识检索 RAG', icon: '📚' },
-        risk:      { label: '风险评估',   icon: '🛡️' },
-        specialty: { label: '专科分析',   icon: '🏥' },
-        answer:    { label: '生成回答',   icon: '💬' },
+        plan:      { label: '流程规划' },
+        inquiry:   { label: '问诊分析' },
+        symptom:   { label: '症状分析' },
+        rag:       { label: '知识检索 RAG' },
+        risk:      { label: '风险评估' },
+        specialty: { label: '专科分析' },
+        answer:    { label: '生成回答' },
       };
 
       let sessions = [];     // 全部会话
@@ -351,11 +371,50 @@
       const modeHint = document.getElementById('modeHint');
 
       // ================== 侧边栏（移动端抽屉） ==================
-      function openSidebar() { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+      function openSidebar() { closeFeatureMenu(); sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
       function closeSidebar() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
       document.getElementById('menuBtn').addEventListener('click', openSidebar);
       document.getElementById('closeSidebarBtn').addEventListener('click', closeSidebar);
       overlay.addEventListener('click', closeSidebar);
+      document.getElementById('logoBtn').addEventListener('click', () => switchMode(MODE.HOME));
+
+      // ================== 功能菜单（右上角） ==================
+      const featureMenu = document.getElementById('featureMenu');
+      const featureMenuBody = document.getElementById('featureMenuBody');
+      function openFeatureMenu() {
+        featureMenu.classList.remove('hidden');
+      }
+      function closeFeatureMenu() {
+        featureMenu.classList.add('hidden');
+      }
+      function renderFeatureMenu() {
+        featureMenuBody.innerHTML = FEATURE_GROUPS.map(g => `
+          <div class="mb-3 last:mb-0">
+            <p class="text-[11px] font-medium text-text-sub px-2 mb-1.5">${g.name}</p>
+            <div class="grid grid-cols-1 gap-0.5">
+              ${g.items.map(it => `
+                <button data-mode="${it.mode}" class="menu-item w-full text-left flex items-center gap-3 px-2.5 py-2.5 rounded-xl hover:bg-gray-50 transition">
+                  <span class="w-9 h-9 rounded-lg bg-primary-light/60 text-primary flex items-center justify-center shrink-0">${ICONS[it.icon] || ICONS.help}</span>
+                  <span class="min-w-0">
+                    <span class="block text-sm font-medium ${currentMode === it.mode ? 'text-primary' : 'text-text-main'}">${it.label}</span>
+                    <span class="block text-[11px] text-text-sub truncate">${it.desc}</span>
+                  </span>
+                </button>`).join('')}
+            </div>
+          </div>`).join('');
+        featureMenuBody.querySelectorAll('.menu-item').forEach(b => b.addEventListener('click', () => {
+          closeFeatureMenu();
+          switchMode(b.dataset.mode);
+        }));
+      }
+      document.getElementById('featureBtn').addEventListener('click', e => {
+        e.stopPropagation();
+        if (featureMenu.classList.contains('hidden')) { renderFeatureMenu(); openFeatureMenu(); }
+        else closeFeatureMenu();
+      });
+      document.addEventListener('click', e => {
+        if (!featureMenu.contains(e.target) && e.target.id !== 'featureBtn' && !featureMenu.classList.contains('hidden')) closeFeatureMenu();
+      });
 
       // ================== 渲染：侧边栏 ==================
       function renderSidebar() {
@@ -379,6 +438,103 @@
             </div>`;
         }).join('');
       }
+      // ================== 渲染：首页 ==================
+      let homeStats = null; // 首页统计（知识库片段数等）
+      async function loadHomeStats() {
+        const [kb, faq] = await Promise.all([
+          apiFetch('/api/knowledge/stats'),
+          apiFetch('/api/faq'),
+        ]);
+        homeStats = {
+          chunks: kb.ok && kb.data.chunk_count ? kb.data.chunk_count : null,
+          faqCategories: faq.ok ? (faq.data.categories || []).length : 0,
+          faqQuestions: faq.ok ? (faq.data.questions || []).length : 0,
+        };
+      }
+      function homeHeroHtml() {
+        const hour = new Date().getHours();
+        const greet = hour < 6 ? '夜深了' : hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好';
+        const statCard = (value, label, sub) => `
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+            <p class="text-xl font-semibold tabular-nums">${value}</p>
+            <p class="text-[11px] text-text-sub mt-0.5">${label}${sub ? '<br/>' + sub : ''}</p>
+          </div>`;
+        const statChunks = homeStats && homeStats.chunks != null
+          ? homeStats.chunks.toLocaleString()
+          : '—';
+        const statsHtml = `
+          <div class="grid grid-cols-4 gap-2 sm:gap-3 mt-6">
+            ${statCard('13', '演示医院', '杭州·北京·上海·深圳')}
+            ${statCard(statChunks, '知识库片段', '《内科学》《外科学》')}
+            ${statCard(homeStats ? homeStats.faqQuestions : '—', '常见问答', (homeStats ? homeStats.faqCategories : 0) + ' 个分类')}
+            ${statCard('6+1', '协作 Agent', '问诊·分析·评估')}
+          </div>`;
+        const chips = ['最近总是失眠怎么办', '高血压平时要注意什么', '体检报告怎么看', '皮肤上长了红疹'];
+        return `
+          <div class="text-center pt-8 sm:pt-12 px-2">
+            <div class="w-16 h-16 rounded-2xl bg-primary-light flex items-center justify-center text-primary mx-auto mb-5">
+              ${ICONS.users.replace('width="18"', 'width="30"').replace('height="18"', 'height="30"')}
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">${greet}，有什么可以帮您？</h1>
+            <p class="text-sm text-text-sub mt-2.5 max-w-md mx-auto leading-relaxed">
+              基于多智能体协同与医学教材知识库的 AI 健康咨询：问诊、检索、分析、回答，全流程透明可见。
+            </p>
+            <div class="max-w-xl mx-auto mt-7 flex items-end gap-2 bg-white rounded-2xl border border-gray-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 p-2.5 shadow-sm transition text-left">
+              <textarea id="homeInput" rows="1" maxlength="2000" placeholder="描述您的健康疑问，直接开始智能问答…"
+                class="flex-1 resize-none bg-transparent outline-none text-sm text-text-main placeholder:text-text-sub/70 leading-relaxed px-2 py-1.5 max-h-[100px]"></textarea>
+              <button id="homeAskBtn" class="shrink-0 px-4 h-10 rounded-xl bg-primary hover:bg-primary-dark active:scale-95 text-white text-sm font-medium flex items-center gap-1.5 shadow-md shadow-primary/25 transition">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>
+                提问
+              </button>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2 mt-4">
+              ${chips.map(c => `<button data-chip class="text-xs px-3.5 py-1.5 rounded-full bg-white border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/40 transition">${c}</button>`).join('')}
+            </div>
+            ${statsHtml}
+          </div>`;
+      }
+      function featureCardHtml(item) {
+        return `
+          <button data-mode="${item.mode}" class="feature-card text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-0.5 transition px-4 py-4 flex items-start gap-3">
+            <span class="w-10 h-10 rounded-xl bg-primary-light/60 text-primary flex items-center justify-center shrink-0">${ICONS[item.icon] || ICONS.help}</span>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium text-text-main">${item.label}</span>
+              <span class="block text-[11px] text-text-sub mt-0.5 leading-relaxed">${item.desc}</span>
+            </span>
+          </button>`;
+      }
+      function renderHome() {
+        messageContainer.innerHTML = `
+          <div class="max-w-3xl mx-auto">
+            ${homeHeroHtml()}
+            <div class="mt-9">
+              <div class="flex items-center gap-3 mb-3.5">
+                <p class="text-sm font-semibold text-text-main shrink-0">全部功能</p>
+                <div class="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                ${FEATURE_GROUPS.flatMap(g => g.items).map(featureCardHtml).join('')}
+              </div>
+            </div>
+            <p class="text-center text-[11px] text-text-sub mt-9 pb-6 leading-relaxed">
+              AI 医疗助手仅提供健康科普参考，不构成医疗诊断。如有身体不适，请及时前往正规医院就诊。
+            </p>
+          </div>`;
+        // 首页快捷提问：跳到智能问答并直接发送
+        const homeInput = document.getElementById('homeInput');
+        const ask = () => {
+          const text = homeInput.value.trim();
+          if (!text) { homeInput.focus(); return; }
+          input.value = text;
+          switchMode(MODE.CHAT);
+          sendMessage();
+        };
+        document.getElementById('homeAskBtn').addEventListener('click', ask);
+        homeInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(); }
+        });
+        messageContainer.querySelectorAll('.feature-card').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode)));
+      }
 
       // ================== 渲染：消息气泡 ==================
       function userBubble(m) {
@@ -393,13 +549,13 @@
       function aiBubble(m) {
         // 模式徽章：让普通问答与会诊回答一眼可辨
         const badge = m.mode === MODE.AGENT
-          ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-primary text-white font-medium">🩺 会诊报告</span>'
-          : '<span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-text-sub font-medium">⚡ 快速问答</span>';
+          ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-primary text-white font-medium">会诊报告</span>'
+          : '<span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-text-sub font-medium">快速问答</span>';
         const sourcesHtml = (m.sources && m.sources.length)
-          ? `<p class="text-[10px] text-text-sub mt-2 border-t border-gray-100 pt-2 leading-relaxed">📚 参考来源：${m.sources.map(escapeHtml).join('；')}</p>`
+          ? `<p class="text-[10px] text-text-sub mt-2 border-t border-gray-100 pt-2 leading-relaxed">参考来源：${m.sources.map(escapeHtml).join('；')}</p>`
           : '';
         const riskHtml = m.risk_level === '高风险'
-          ? '<p class="text-[11px] text-danger font-medium mt-2 bg-red-50 rounded-lg px-2.5 py-1.5">🚨 风险评估为高风险，请立即就医</p>'
+          ? '<p class="text-[11px] text-danger font-medium mt-2 bg-red-50 rounded-lg px-2.5 py-1.5">风险评估为高风险，请立即就医</p>'
           : '';
         return `
           <div class="flex justify-start gap-2.5">
@@ -433,7 +589,7 @@
             </div>
             <div class="max-w-[85%] sm:max-w-[75%]">
               <div class="bg-white rounded-2xl rounded-tl-md shadow-sm border border-red-100 px-4 py-3">
-                <p class="text-[11px] font-medium text-danger mb-1">🩺 问诊 Agent 追问</p>
+                <p class="text-[11px] font-medium text-danger mb-1">问诊 Agent 追问</p>
                 <p class="text-sm leading-relaxed whitespace-pre-wrap break-words text-text-main">${escapeHtml(m.content)}</p>
                 <p class="text-[10px] text-text-sub text-right mt-1.5">${formatTime(m.time)}</p>
               </div>
@@ -450,7 +606,7 @@
           if (key === 'parallel') {
             const subs = (p.parallel || []).map(s => `
               <div class="flex-1 min-w-0 bg-white rounded-lg border border-gray-100 px-2.5 py-2">
-                <p class="text-[10px] text-text-sub text-center truncate">${AGENT_META[s.key] ? AGENT_META[s.key].icon : ''} ${AGENT_META[s.key] ? AGENT_META[s.key].label : s.key}</p>
+                <p class="text-[10px] text-text-sub text-center truncate">${AGENT_META[s.key] ? AGENT_META[s.key].label : s.key}</p>
                 <p class="text-[10px] text-center mt-0.5 font-medium ${s.status === 'done' ? 'text-success' : 'text-text-sub/50'}">
                   ${s.status === 'done' ? '✓ 完成' + (s.elapsed ? ' ' + s.elapsed : '') : '未进行'}
                 </p>
@@ -465,23 +621,23 @@
           return `
             <div class="flex items-center gap-2.5 ${key === 'plan' ? '' : 'mt-2'}">
               <span class="w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0 ${stage.status === 'done' ? 'bg-success/10 text-success' : 'bg-gray-100 text-text-sub/50'}">${stage.status === 'done' ? '✓' : '·'}</span>
-              <span class="text-xs font-medium ${stage.status === 'done' ? 'text-text-main' : 'text-text-sub/60'}">${AGENT_META[key].icon} ${AGENT_META[key].label}</span>
+              <span class="text-xs font-medium ${stage.status === 'done' ? 'text-text-main' : 'text-text-sub/60'}">${AGENT_META[key].label}</span>
               <span class="text-[10px] ${stage.status === 'done' ? 'text-success' : 'text-text-sub/50'}">${stage.status === 'done' ? '完成' + (stage.elapsed ? ' · ' + stage.elapsed : '') : '未进行'}</span>
             </div>`;
         };
         const ragDetail = p.ragDetail
-          ? `<details class="mt-2 text-[11px] text-text-sub"><summary class="cursor-pointer select-none hover:text-primary transition">📚 查看知识库检索详情（${p.ragChunks || 0} 条）</summary><pre class="whitespace-pre-wrap mt-1.5 bg-gray-50 rounded-lg p-2 max-h-48 overflow-y-auto custom-scroll text-text-sub leading-relaxed">${escapeHtml(p.ragDetail)}</pre></details>`
+          ? `<details class="mt-2 text-[11px] text-text-sub"><summary class="cursor-pointer select-none hover:text-primary transition">查看知识库检索详情（${p.ragChunks || 0} 条）</summary><pre class="whitespace-pre-wrap mt-1.5 bg-gray-50 rounded-lg p-2 max-h-48 overflow-y-auto custom-scroll text-text-sub leading-relaxed">${escapeHtml(p.ragDetail)}</pre></details>`
           : '';
         const riskBadge = p.risk && p.risk.level
-          ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${p.risk.level === '高风险' ? 'bg-red-50 text-danger' : p.risk.level === '中风险' ? 'bg-orange-50 text-warning' : 'bg-green-50 text-success'}">🛡️ ${p.risk.level}</span>`
+          ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${p.risk.level === '高风险' ? 'bg-red-50 text-danger' : p.risk.level === '中风险' ? 'bg-orange-50 text-warning' : 'bg-green-50 text-success'}">${p.risk.level}</span>`
           : '';
         return `
           <div class="bg-white/70 border border-primary-light/70 rounded-2xl px-4 py-3 mb-2">
             <div class="flex items-center justify-between gap-2">
-              <p class="text-xs font-semibold text-primary">🩺 会诊过程${isKnowledge ? '（知识问答捷径）' : '（完整流程）'}</p>
+              <p class="text-xs font-semibold text-primary">会诊过程${isKnowledge ? '（知识问答捷径）' : '（完整流程）'}</p>
               ${riskBadge}
             </div>
-            <p class="text-[11px] text-text-sub mt-1.5 leading-relaxed">🧭 ${escapeHtml(p.reason || 'Supervisor 已完成流程规划')}</p>
+            <p class="text-[11px] text-text-sub mt-1.5 leading-relaxed">${escapeHtml(p.reason || 'Supervisor 已完成流程规划')}</p>
             <div class="mt-2 border-t border-gray-100 pt-2">
               ${seq.map(stageHtml).join('')}
             </div>
@@ -498,7 +654,7 @@
               </svg>
             </div>
             <h3 class="text-lg font-semibold text-text-main">你好，我是 AI 医疗助手</h3>
-            <p class="text-sm text-text-sub mt-2 max-w-sm leading-relaxed">描述您的健康疑问，切换上方模式体验不同功能：快速问答、多智能体会诊、知识库检索。</p>
+            <p class="text-sm text-text-sub mt-2 max-w-sm leading-relaxed">描述您的健康疑问，体验智能问答、多智能体会诊或知识库检索。</p>
             <div class="flex flex-wrap justify-center gap-2 mt-6">
               ${chips.map(c => `<button data-chip class="text-xs sm:text-sm px-4 py-2 rounded-full bg-white border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/40 transition">${c}</button>`).join('')}
             </div>
@@ -512,12 +668,12 @@
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-text-main">🩺 多智能体会诊</h3>
+            <h3 class="text-lg font-semibold text-text-main">多智能体会诊</h3>
             <p class="text-sm text-text-sub mt-2 max-w-md leading-relaxed">与普通问答不同，这里由 Supervisor 组织 6 个 Agent 协作：问诊 Agent 会追问病情细节，然后并行执行症状分析、RAG 知识检索、风险评估，再由专科 Agent 匹配方向，最终生成结构化会诊报告。</p>
             <div class="w-full max-w-md mt-5 bg-white rounded-2xl border border-gray-100 p-4 text-left space-y-2">
-              <p class="text-xs text-text-sub">🧭 Supervisor：规划流程 → 🩺 问诊：多轮追问收集病情</p>
-              <p class="text-xs text-text-sub">⚡ 并行分析：🔬症状 + 📚RAG检索 + 🛡️风险评估</p>
-              <p class="text-xs text-text-sub">🏥 专科匹配 → 💬 综合会诊报告（含风险提示与文献来源）</p>
+              <p class="text-xs text-text-sub">Supervisor：规划流程 → 问诊：多轮追问收集病情</p>
+              <p class="text-xs text-text-sub">并行分析：症状 + RAG 检索 + 风险评估</p>
+              <p class="text-xs text-text-sub">专科匹配 → 综合会诊报告（含风险提示与文献来源）</p>
             </div>
             <div class="flex flex-wrap justify-center gap-2 mt-6">
               ${['我最近总是头晕，持续三天', '肚子疼了两天，吃什么药', '最近总是咳嗽，晚上加重'].map(c => `<button data-chip class="text-xs sm:text-sm px-4 py-2 rounded-full bg-white border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/40 transition">${c}</button>`).join('')}
@@ -533,24 +689,26 @@
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-text-main">📚 知识库检索</h3>
-            <p class="text-sm text-text-sub mt-2 max-w-md leading-relaxed">直接检索医疗教材知识库（《内科学》《外科学》第10版，8398 个知识片段）：向量召回 + 重排精排，返回最相关的原文片段及精确页码。</p>
+            <h3 class="text-lg font-semibold text-text-main">知识库检索</h3>
+            <p class="text-sm text-text-sub mt-2 max-w-md leading-relaxed">直接检索医疗教材知识库（《内科学》《外科学》第10版）：向量召回 + 重排精排，返回最相关的原文片段及精确页码。</p>
             <div class="flex flex-wrap justify-center gap-2 mt-6">
               ${chips.map(c => `<button data-chip class="text-xs sm:text-sm px-4 py-2 rounded-full bg-white border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/40 transition">${c}</button>`).join('')}
             </div>
           </div>`;
       }
       function renderMessages() {
+        if (currentMode === MODE.HOME) { renderHome(); return; }
         if (SERVICE_MODES.includes(currentMode)) { renderServicePanel(); return; }
-        if (currentMode === MODE.SEARCH) { messageContainer.innerHTML = searchEmptyState(); return; }
         const session = sessions.find(s => s.id === currentId);
         if (!session || !session.messages.length) {
-          messageContainer.innerHTML = currentMode === MODE.AGENT ? agentEmptyState() : emptyState();
+          messageContainer.innerHTML = currentMode === MODE.AGENT ? agentEmptyState()
+            : currentMode === MODE.SEARCH ? searchEmptyState() : emptyState();
           return;
         }
         messageContainer.innerHTML = session.messages.map(m => {
           if (m.role === 'user') return userBubble(m);
           if (m.isQuestion) return doctorQuestionBubble(m);
+          if (m.results || m.error) return searchResultBubble(m);
           // 会诊消息：先渲染过程面板，再渲染回答气泡
           return (m.process ? processCardHtml(m.process) : '') + aiBubble(m);
         }).join('');
@@ -585,8 +743,11 @@
         else if (m === MODE.HOSPITAL) renderHospitalPanel();
         else if (m === MODE.VISION) renderVisionPanel();
         else if (m === MODE.PROFILE) renderProfilePanel();
+        else if (m === MODE.REPORT) renderReportPanel();
+        else if (m === MODE.MEDS) renderMedsPanel();
+        else if (m === MODE.TRENDS) renderTrendsPanel();
+        else if (m === MODE.FAQ) renderFaqPanel();
       }
-
       // ================== 服务一：预约挂号 ==================
       const APPT_DEPARTMENTS = ['皮肤科', '内科', '外科', '儿科', '妇产科', '骨科', '眼科', '口腔科', '耳鼻喉科', '中医科'];
       let apptView = 'book';      // book | list
@@ -597,7 +758,7 @@
         const steps = ['选科室', '选时段', '填信息', '挂号单'];
         return `
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-base font-semibold">🏥 预约挂号</h3>
+            <h3 class="text-base font-semibold flex items-center gap-2">${ICONS.calendar.replace('width="18"', 'width="20"').replace('height="18"', 'height="20"').replace('currentColor', 'currentColor" class="text-primary')}预约挂号</h3>
             <button id="apptToggleView" class="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-text-sub hover:text-primary hover:border-primary transition">
               ${apptView === 'book' ? '我的预约 →' : '← 返回挂号'}
             </button>
@@ -657,7 +818,7 @@
             <button data-hid="${h.id}" class="hosp-btn w-full text-left flex items-center justify-between gap-2 rounded-xl border border-gray-200 px-4 py-3 hover:border-primary hover:bg-primary-light/30 transition">
               <span class="min-w-0">
                 <span class="block text-sm font-medium truncate">${escapeHtml(h.name)}</span>
-                <span class="block text-[11px] text-text-sub mt-0.5">${escapeHtml(h.level)} · ${escapeHtml(h.city)}${escapeHtml(h.district)} · 距您约 ${h.distance_km}km</span>
+                <span class="block text-[11px] text-text-sub mt-0.5">${escapeHtml(h.level)} · ${escapeHtml(h.city)}${escapeHtml(h.district)} · 参考距离 ${h.distance_km}km</span>
               </span>
               <span class="text-[11px] text-warning shrink-0">★ ${h.rating}</span>
             </button>`).join('')}</div>`;
@@ -798,11 +959,11 @@
             <p class="text-xs text-text-sub mt-1">预约号 <span class="text-primary font-semibold">${data.appointment_id}</span>（演示系统，无真实号源）</p>
           </div>
           <div class="mt-4 rounded-xl border border-dashed border-gray-300 p-4 space-y-1.5 text-sm">
-            <p>🏥 <span class="font-medium">${escapeHtml(t.hospital_name)}</span></p>
+            <p><span class="font-medium">${escapeHtml(t.hospital_name)}</span></p>
             <p class="text-xs text-text-sub">${escapeHtml(t.hospital_address)}</p>
-            <p>👨‍⚕️ ${escapeHtml(t.department)} · ${escapeHtml(t.doctor)}</p>
-            <p>🕐 ${t.visit_date} ${escapeHtml(t.time_slot)}</p>
-            <p>🧑 ${escapeHtml(t.patient_name)}</p>
+            <p>${escapeHtml(t.department)} · ${escapeHtml(t.doctor)}</p>
+            <p>${t.visit_date} ${escapeHtml(t.time_slot)}</p>
+            <p>就诊人：${escapeHtml(t.patient_name)}</p>
           </div>
           <div class="flex gap-2 mt-4">
             <button id="viewMyAppt" class="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium">查看我的预约</button>
@@ -846,15 +1007,22 @@
         }));
       }
 
-      // ================== 服务二：附近医院 ==================
+      // ================== 服务二：附近医院（真实定位） ==================
       let hospitalCity = '', hospitalDistrict = '';
-      async function renderHospitalPanel() {
+      let hospitalLat = null, hospitalLng = null; // 浏览器真实定位（开启后按真实距离排序）
+      function renderHospitalPanel() {
         messageContainer.innerHTML = serviceShell(`
-          <h3 class="text-base font-semibold mb-3">📍 附近医院</h3>
+          <div class="flex items-center justify-between mb-3 gap-2">
+            <h3 class="text-base font-semibold flex items-center gap-2">${ICONS.pin.replace('width="18"', 'width="20"').replace('height="18"', 'height="20"')}附近医院</h3>
+            <button id="locateBtn" class="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-text-sub hover:text-primary hover:border-primary transition">
+              ${hospitalLat != null ? '已定位 · 重新定位' : '定位 · 离我最近'}
+            </button>
+          </div>
+          <div id="locateHint" class="hidden text-[11px] rounded-xl px-3 py-2 mb-2"></div>
           <div id="cityRow" class="flex gap-1.5 overflow-x-auto custom-scroll pb-2 mb-2"></div>
           <div id="districtRow" class="flex gap-1.5 overflow-x-auto custom-scroll pb-2 mb-3"></div>
           <div id="hospitalList"><p class="text-sm text-text-sub text-center py-6">加载中…</p></div>
-          <p class="text-[11px] text-text-sub mt-3 text-center">* 医院为内置演示数据，距离为模拟值；如需真实定位可接入高德/腾讯地图开放平台</p>`);
+          <p class="text-[11px] text-text-sub mt-3 text-center">* 医院为演示数据；定位后按经纬度计算真实直线距离并排序</p>`);
         const cities = ['', '杭州', '北京', '上海', '深圳'];
         document.getElementById('cityRow').innerHTML = cities.map(c =>
           `<button data-city="${c}" class="city-chip text-xs px-3 py-1.5 rounded-full border transition shrink-0 ${hospitalCity === c ? 'bg-primary text-white border-primary' : 'border-gray-200 text-text-sub hover:border-primary hover:text-primary'}">${c || '全部'}</button>`
@@ -863,13 +1031,53 @@
           hospitalCity = b.dataset.city; hospitalDistrict = '';
           renderHospitalPanel();
         }));
-        await loadHospitalList();
+        document.getElementById('locateBtn').addEventListener('click', doLocate);
+        renderLocateHint();
+        loadHospitalList();
+      }
+
+      function doLocate() {
+        const btn = document.getElementById('locateBtn');
+        if (!navigator.geolocation) {
+          alert('当前浏览器不支持定位，请使用较新的 Chrome / Edge');
+          return;
+        }
+        btn.disabled = true; btn.textContent = '定位中…';
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            hospitalLat = pos.coords.latitude;
+            hospitalLng = pos.coords.longitude;
+            btn.disabled = false; btn.textContent = '已定位 · 重新定位';
+            renderLocateHint();
+            loadHospitalList();
+          },
+          err => {
+            btn.disabled = false; btn.textContent = '定位 · 离我最近';
+            const hint = document.getElementById('locateHint');
+            hint.classList.remove('hidden');
+            hint.className = 'text-[11px] rounded-xl px-3 py-2 mb-2 bg-orange-50 text-text-main border border-orange-200';
+            hint.textContent = '定位失败：' + (err.code === 1 ? '您拒绝了定位权限，可通过城市筛选浏览（localhost 本地访问不需要地图 Key）' : '暂时无法获取位置，请稍后重试');
+          },
+          { timeout: 8000, maximumAge: 60000 }
+        );
+      }
+      function renderLocateHint() {
+        const hint = document.getElementById('locateHint');
+        if (!hint) return;
+        if (hospitalLat != null) {
+          hint.classList.remove('hidden');
+          hint.className = 'text-[11px] rounded-xl px-3 py-2 mb-2 bg-primary-light/60 text-text-main border border-primary/20';
+          hint.textContent = `已定位（${hospitalLat.toFixed(4)}, ${hospitalLng.toFixed(4)}）：距离为按经纬度计算的真实直线距离，已按"离我最近"排序`;
+        } else {
+          hint.classList.add('hidden');
+        }
       }
 
       async function loadHospitalList() {
         const params = new URLSearchParams();
         if (hospitalCity) params.set('city', hospitalCity);
         if (hospitalDistrict) params.set('district', hospitalDistrict);
+        if (hospitalLat != null) { params.set('lat', hospitalLat); params.set('lng', hospitalLng); }
         const res = await apiFetch('/api/hospitals?' + params.toString());
         const hospitals = res.ok ? (res.data.hospitals || []) : [];
         const districtRow = document.getElementById('districtRow');
@@ -891,30 +1099,33 @@
           list.innerHTML = '<p class="text-sm text-text-sub text-center py-6">该筛选条件下暂无医院（请确认 MySQL 已启用）</p>';
           return;
         }
-        list.innerHTML = `<div class="space-y-2">${hospitals.map(h => `
+        const located = hospitalLat != null;
+        const distLabel = d => located
+          ? (d < 10 ? d + ' km' : '约 ' + Math.round(d) + ' km') + '<span class="text-[10px] text-text-sub/70">（直线）</span>'
+          : '约 ' + d + ' km<span class="text-[10px] text-text-sub/70">（参考）</span>';
+        list.innerHTML = `<div class="space-y-2">${hospitals.map((h, i) => `
           <div class="rounded-xl border border-gray-200 px-4 py-3">
             <div class="flex items-start justify-between gap-2">
-              <p class="text-sm font-medium">${escapeHtml(h.name)}</p>
+              <p class="text-sm font-medium">${i === 0 && located ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-primary text-white align-middle mr-1.5">最近</span>' : ''}${escapeHtml(h.name)}</p>
               <span class="shrink-0 text-[10px] px-2 py-0.5 rounded-full ${h.level === '三甲' ? 'bg-primary-light text-primary' : 'bg-gray-100 text-text-sub'}">${escapeHtml(h.level)}</span>
             </div>
-            <p class="text-[11px] text-text-sub mt-1">📍 ${escapeHtml(h.address)}</p>
-            <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-              <span class="text-[11px] text-text-sub">📞 ${escapeHtml(h.phone)}</span>
+            <p class="text-[11px] text-text-sub mt-1">${escapeHtml(h.address)}</p>
+            <div class="flex flex-wrap items-center gap-2 mt-1.5">
+              <span class="text-[11px] text-text-sub">${escapeHtml(h.phone)}</span>
               <span class="text-[11px] text-warning">★ ${h.rating}</span>
-              <span class="text-[11px] text-text-sub">· 距您约 ${h.distance_km}km</span>
+              <span class="text-[11px] text-text-main font-medium">距您 ${distLabel(h.distance_km)}</span>
             </div>
             <div class="flex flex-wrap gap-1 mt-1.5">${h.departments.slice(0, 7).map(d => `<span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-50 text-text-sub border border-gray-100">${escapeHtml(d)}</span>`).join('')}</div>
           </div>`).join('')}</div>`;
       }
-
       // ================== 服务三：图片问诊 ==================
       let visionFile = null;
       function renderVisionPanel() {
         messageContainer.innerHTML = serviceShell(`
-          <h3 class="text-base font-semibold mb-1">📷 图片问诊（皮肤科）</h3>
+          <h3 class="text-base font-semibold mb-1 flex items-center gap-2">${ICONS.camera.replace('width="18"', 'width="20"').replace('height="18"', 'height="20"')}图片问诊（皮肤科）</h3>
           <p class="text-xs text-text-sub mb-3">上传皮损、皮疹、色素斑等照片，视觉大模型给出初步识别与护理建议。</p>
           <div id="dropZone" class="rounded-2xl border-2 border-dashed border-gray-200 hover:border-primary transition cursor-pointer py-10 text-center">
-            <p class="text-3xl mb-2">🖼️</p>
+            <p class="text-primary mb-2">${ICONS.camera.replace('width="18"', 'width="28"').replace('height="18"', 'height="28"')}</p>
             <p class="text-sm text-text-main">点击或拖拽上传图片</p>
             <p class="text-[11px] text-text-sub mt-1">支持 jpg / png / webp，不超过 8MB</p>
             <input type="file" id="visionInput" accept="image/*" class="hidden" />
@@ -924,7 +1135,7 @@
           </div>
           <button id="analyzeBtn" disabled class="w-full mt-3 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-md shadow-primary/25 transition disabled:opacity-40">开始识别</button>
           <div id="visionResult" class="mt-3"></div>
-          <p class="text-[11px] text-text-sub mt-3">⚠️ 识别结果仅供健康参考，不构成医疗诊断，请及时到皮肤科面诊。</p>`);
+          <p class="text-[11px] text-text-sub mt-3">识别结果仅供健康参考，不构成医疗诊断，请及时到皮肤科面诊。</p>`);
         const dz = document.getElementById('dropZone');
         const fi = document.getElementById('visionInput');
         dz.addEventListener('click', () => fi.click());
@@ -964,7 +1175,7 @@
         btn.disabled = false; btn.textContent = '重新识别';
         if (res.status === 503) {
           result.innerHTML = `<div class="rounded-xl bg-orange-50 border border-orange-200 p-4 text-xs leading-relaxed text-text-main">
-            <p class="font-medium mb-1">🚧 图片问诊未启用（缺少视觉模型 Key）</p>
+            <p class="font-medium mb-1">图片问诊未启用（缺少视觉模型 Key）</p>
             <p>${escapeHtml(res.data.detail || '')}</p>
             <p class="mt-2">配置步骤：硅基流动官网注册 → 创建 API Key → 写入项目 .env 的 <code class="bg-white px-1 rounded">SILICONFLOW_API_KEY=sk-xxx</code> → 重启服务。</p>
           </div>`;
@@ -979,14 +1190,14 @@
         result.innerHTML = `
           <div class="rounded-2xl border border-gray-100 bg-white shadow-sm p-4 space-y-2">
             <div class="flex items-center justify-between">
-              <p class="text-sm font-semibold">🔍 识别结果</p>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${riskCls}">🛡️ ${escapeHtml(r.risk_level || '—')}</span>
+              <p class="text-sm font-semibold">识别结果</p>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${riskCls}">${escapeHtml(r.risk_level || '—')}</span>
             </div>
-            <p class="text-xs font-medium text-text-main">📋 图片描述</p>
+            <p class="text-xs font-medium text-text-main">图片描述</p>
             <p class="text-[13px] leading-relaxed text-text-main">${escapeHtml(r.description || '')}</p>
-            ${r.possible_conditions ? `<p class="text-xs font-medium text-text-main">🤔 可能的情况</p><p class="text-[13px] leading-relaxed text-text-main">${escapeHtml(r.possible_conditions)}</p>` : ''}
-            ${r.advice ? `<p class="text-xs font-medium text-text-main">💡 建议</p><p class="text-[13px] leading-relaxed text-text-main">${escapeHtml(r.advice)}</p>` : ''}
-            <button id="toAgentBtn" class="w-full mt-2 py-2 rounded-xl bg-primary text-white text-xs font-medium">🩺 将识别描述送入多智能体会诊，继续追问分析</button>
+            ${r.possible_conditions ? `<p class="text-xs font-medium text-text-main">可能的情况</p><p class="text-[13px] leading-relaxed text-text-main">${escapeHtml(r.possible_conditions)}</p>` : ''}
+            ${r.advice ? `<p class="text-xs font-medium text-text-main">建议</p><p class="text-[13px] leading-relaxed text-text-main">${escapeHtml(r.advice)}</p>` : ''}
+            <button id="toAgentBtn" class="w-full mt-2 py-2 rounded-xl bg-primary text-white text-xs font-medium">将识别描述送入多智能体会诊，继续追问分析</button>
           </div>`;
         document.getElementById('toAgentBtn').addEventListener('click', () => {
           switchMode(MODE.AGENT);
@@ -1007,7 +1218,7 @@
         if (!token) {
           messageContainer.innerHTML = serviceShell(`
             <div class="text-center py-8">
-              <p class="text-3xl mb-3">👤</p>
+              <p class="text-primary mb-3 flex justify-center">${ICONS.user.replace('width="18"', 'width="32"').replace('height="18"', 'height="32"')}</p>
               <p class="text-sm font-medium">健康档案需要登录后使用</p>
               <p class="text-xs text-text-sub mt-1">档案仅您自己可见，多智能体会诊时自动携带（可在输入框上方关闭）</p>
               <a href="login.html" class="inline-block mt-4 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium">去登录</a>
@@ -1022,7 +1233,7 @@
         }
         const p = res.ok ? res.data : null;
         messageContainer.innerHTML = serviceShell(`
-          <h3 class="text-base font-semibold mb-1">👤 健康档案</h3>
+          <h3 class="text-base font-semibold mb-1 flex items-center gap-2">${ICONS.user.replace('width="18"', 'width="20"').replace('height="18"', 'height="20"')}健康档案</h3>
           <p class="text-xs text-text-sub mb-3">病史、过敏史等会在多智能体会诊时自动携带，帮助回答更贴合您的情况（可在输入框上方开关关闭）。</p>
           <div class="grid grid-cols-2 gap-3">
             ${profileField('姓名', 'pName', p && p.real_name, '如：张三')}
@@ -1086,664 +1297,1229 @@
         if (currentMode === MODE.AGENT) toggle.classList.toggle('hidden', !profileAvailable);
       }
 
-      // ================== 流式气泡 ==================
-      function createStreamBubble(statusText, mode) {
-        const root = document.createElement('div');
-        root.className = 'flex justify-start gap-2.5';
-        const badge = mode === MODE.AGENT
-          ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-primary text-white font-medium">🩺 会诊报告</span>'
-          : '<span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-text-sub font-medium">⚡ 快速问答</span>';
-        root.innerHTML = `
-          <div class="w-8 h-8 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0 mt-1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
+      // ================== 服务五：体检报告解读 ==================
+      let reportFile = null;
+      function renderReportPanel() {
+        messageContainer.innerHTML = serviceShell(`
+          <h3 class="text-base font-semibold mb-1 flex items-center gap-2">${ICONS.file.replace('width="18"', 'width="20"').replace('height="18"', 'height="20"')}体检报告解读</h3>
+          <p class="text-xs text-text-sub mb-3">粘贴报告文字或上传报告照片，AI 按指标逐项解读：检测值、参考范围、评估与建议。</p>
+          <div class="flex gap-1.5 mb-3">
+            <button id="reportTabText" class="report-tab flex-1 py-2 rounded-xl text-sm font-medium border transition bg-primary text-white border-primary">文字报告</button>
+            <button id="reportTabImage" class="report-tab flex-1 py-2 rounded-xl text-sm font-medium border transition border-gray-200 text-text-sub hover:border-primary hover:text-primary">报告图片</button>
           </div>
-          <div class="max-w-[85%] sm:max-w-[75%] min-w-0">
+          <div id="reportTextArea">
+            <textarea id="reportText" rows="7" maxlength="20000" placeholder="粘贴体检报告内容，如：&#10;血常规：白细胞 9.5×10⁹/L（参考 3.5-9.5）&#10;空腹血糖 6.8 mmol/L（参考 3.9-6.1）&#10;…"
+              class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm resize-none leading-relaxed"></textarea>
+          </div>
+          <div id="reportFileArea" class="hidden">
+            <div id="reportDropZone" class="rounded-2xl border-2 border-dashed border-gray-200 hover:border-primary transition cursor-pointer py-8 text-center">
+              <p class="text-primary mb-2">${ICONS.file.replace('width="18"', 'width="26"').replace('height="18"', 'height="26"')}</p>
+              <p class="text-sm text-text-main">点击或拖拽上传报告图片</p>
+              <p class="text-[11px] text-text-sub mt-1">jpg / png / webp，不超过 8MB；图片需清晰完整</p>
+              <input type="file" id="reportInput" accept="image/*" class="hidden" />
+            </div>
+            <div id="reportPreview" class="hidden mt-3">
+              <img id="reportImg" class="max-h-48 mx-auto rounded-xl border border-gray-100" alt="报告预览" />
+            </div>
+          </div>
+          <button id="analyzeReportBtn" class="w-full mt-3 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-md shadow-primary/25 transition disabled:opacity-40">开始解读</button>
+          <div id="reportResult" class="mt-4"></div>
+          <p class="text-[11px] text-text-sub mt-3">解读结果仅供健康参考，不构成医疗诊断；异常指标请携带报告到正规医院咨询医生。</p>`);
+        const tabText = document.getElementById('reportTabText');
+        const tabImage = document.getElementById('reportTabImage');
+        let reportMode = 'text';
+        const switchReportTab = mode => {
+          reportMode = mode;
+          const on = 'flex-1 py-2 rounded-xl text-sm font-medium border transition bg-primary text-white border-primary';
+          const off = 'flex-1 py-2 rounded-xl text-sm font-medium border transition border-gray-200 text-text-sub hover:border-primary hover:text-primary';
+          tabText.className = mode === 'text' ? on : off;
+          tabImage.className = mode === 'image' ? on : off;
+          document.getElementById('reportTextArea').classList.toggle('hidden', mode !== 'text');
+          document.getElementById('reportFileArea').classList.toggle('hidden', mode !== 'image');
+        };
+        tabText.addEventListener('click', () => switchReportTab('text'));
+        tabImage.addEventListener('click', () => switchReportTab('image'));
+        const dz = document.getElementById('reportDropZone');
+        const fi = document.getElementById('reportInput');
+        dz.addEventListener('click', () => fi.click());
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('border-primary'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('border-primary'));
+        dz.addEventListener('drop', e => {
+          e.preventDefault(); dz.classList.remove('border-primary');
+          if (e.dataTransfer.files.length) setReportFile(e.dataTransfer.files[0]);
+        });
+        fi.addEventListener('change', () => { if (fi.files.length) setReportFile(fi.files[0]); });
+        document.getElementById('analyzeReportBtn').addEventListener('click', doReportAnalyze);
+      }
+
+      function setReportFile(file) {
+        if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+        if (file.size > 8 * 1024 * 1024) { alert('图片不能超过 8MB'); return; }
+        reportFile = file;
+        const reader = new FileReader();
+        reader.onload = e => {
+          document.getElementById('reportImg').src = e.target.result;
+          document.getElementById('reportPreview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function doReportAnalyze() {
+        const text = document.getElementById('reportText').value.trim();
+        const isText = !document.getElementById('reportTextArea').classList.contains('hidden');
+        if (isText && !text) { alert('请粘贴体检报告内容'); return; }
+        if (!isText && !reportFile) { alert('请先上传报告图片'); return; }
+        const btn = document.getElementById('analyzeReportBtn');
+        const result = document.getElementById('reportResult');
+        btn.disabled = true; btn.textContent = '解读中（约 20-60 秒）…';
+        result.innerHTML = '<p class="text-sm text-text-sub text-center py-6">AI 正在逐项解读报告…</p>';
+        const fd = new FormData();
+        if (isText) fd.append('text', text);
+        else fd.append('file', reportFile);
+        const res = await apiFetch('/api/report/analyze', { method: 'POST', body: fd });
+        btn.disabled = false; btn.textContent = '重新解读';
+        if (res.status === 503) {
+          result.innerHTML = `<div class="rounded-xl bg-orange-50 border border-orange-200 p-4 text-xs leading-relaxed text-text-main">
+            <p class="font-medium mb-1">${isText ? '报告解读未启用' : '报告图片识别未启用（缺少视觉模型 Key）'}</p>
+            <p>${escapeHtml(res.data.detail || '')}</p>
+            ${isText ? '' : '<p class="mt-2">配置步骤：硅基流动官网注册 → 创建 API Key → 写入项目 .env 的 <code class="bg-white px-1 rounded">SILICONFLOW_API_KEY=sk-xxx</code> → 重启服务。</p>'}
+            <p class="mt-1">您也可以直接选择"文字报告"粘贴内容解读（仅需 DEEPSEEK_API_KEY）。</p>
+          </div>`;
+          return;
+        }
+        if (!res.ok) {
+          result.innerHTML = `<p class="text-sm text-danger text-center py-6">解读失败：${escapeHtml((res.data && res.data.detail) || '')}</p>`;
+          return;
+        }
+        renderReportResult(res.data.result || {});
+      }
+
+      function renderReportResult(r) {
+        const riskCls = r.risk_level === '高风险' ? 'bg-red-50 text-danger' : r.risk_level === '中风险' ? 'bg-orange-50 text-warning' : r.risk_level === '低风险' ? 'bg-green-50 text-success' : 'bg-gray-100 text-text-sub';
+        const items = (r.items || []).map(it => `
+          <div class="rounded-xl border border-gray-100 px-3 py-2.5">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <p class="text-[13px] font-medium text-text-main">${escapeHtml(it.name || '')}</p>
+              <p class="text-[11px] text-text-sub">检测值 <span class="font-semibold text-text-main tabular-nums">${escapeHtml(it.value || '—')}</span> · 参考 ${escapeHtml(it.reference || '未提供')}</p>
+            </div>
+            <p class="text-xs leading-relaxed mt-1"><span class="text-text-sub">评估：</span>${escapeHtml(it.assessment || '')}</p>
+            ${it.advice ? `<p class="text-xs leading-relaxed mt-0.5"><span class="text-text-sub">建议：</span>${escapeHtml(it.advice)}</p>` : ''}
+          </div>`).join('');
+        document.getElementById('reportResult').innerHTML = `
+          <div class="rounded-2xl border border-gray-100 bg-white shadow-sm p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-semibold">解读结果</p>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${riskCls}">${escapeHtml(r.risk_level || '—')}</span>
+            </div>
+            ${r.summary ? `<p class="text-[13px] leading-relaxed text-text-main bg-primary-light/40 rounded-xl px-3 py-2.5">${escapeHtml(r.summary)}</p>` : ''}
+            <div class="space-y-2">${items || '<p class="text-xs text-text-sub">未识别到具体指标</p>'}</div>
+            ${r.overall_advice ? `<div><p class="text-xs font-medium text-text-main mb-1">总体建议</p><p class="text-[13px] leading-relaxed text-text-main">${escapeHtml(r.overall_advice)}</p></div>` : ''}
+            <p class="text-[10px] text-text-sub border-t border-gray-100 pt-2">以上解读由 AI 生成，仅供健康参考，不构成医疗诊断。</p>
+          </div>`;
+      }
+
+      // ================== 服务六：用药提醒 ==================
+      let medsNotified = {};   // 已通知集合（当日 key → true），避免重复弹通知
+      let medsTimer = null;    // 到点检查定时器
+      function renderMedsPanel() {
+        if (!token) {
+          messageContainer.innerHTML = serviceShell(`
+            <div class="text-center py-8">
+              <p class="text-primary mb-3 flex justify-center">${ICONS.bell.replace('width="18"', 'width="32"').replace('height="18"', 'height="32"')}</p>
+              <p class="text-sm font-medium">用药提醒需要登录后使用</p>
+              <p class="text-xs text-text-sub mt-1">登录后设置用药计划，页面打开时按时间点弹浏览器通知</p>
+              <a href="login.html" class="inline-block mt-4 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium">去登录</a>
+            </div>`);
+          return;
+        }
+        messageContainer.innerHTML = serviceShell(`
+          <h3 class="text-base font-semibold mb-1 flex items-center gap-2">${ICONS.bell.replace('width="18"', 'width="20"').replace('height="18"', 'height="20"')}用药提醒</h3>
+          <p class="text-xs text-text-sub mb-3">设置用药计划，页面打开时按服药时间点弹出浏览器通知（本机演示方案）；完成服药后打卡记录。</p>
+          <div id="medsChecklist" class="rounded-2xl border border-primary-light/60 bg-primary-light/30 p-4 mb-4"></div>
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-sm font-medium">用药计划</p>
+              <button id="showMedForm" class="text-xs px-3 py-1.5 rounded-full bg-primary text-white hover:bg-primary-dark transition">+ 新增计划</button>
+            </div>
+            <div id="medsList"></div>
+          </div>
+          <div id="medForm" class="hidden rounded-2xl border border-gray-100 bg-gray-50/60 p-4 mb-4">
+            <p class="text-sm font-medium mb-3">新增用药计划</p>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs text-text-sub mb-1">药品名称 *</label>
+                <input id="mName" maxlength="60" placeholder="如：阿莫西林胶囊" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs text-text-sub mb-1">每日服药次数</label>
+                <select id="mTimes" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm bg-white">
+                  ${[1, 2, 3, 4].map(n => `<option value="${n}">${n} 次</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-text-sub mb-1">服药时间点（数量与次数一致）</label>
+                <div id="mTimePoints" class="space-y-1.5"></div>
+              </div>
+              <div>
+                <label class="block text-xs text-text-sub mb-1">备注（选填）</label>
+                <input id="mNote" maxlength="200" placeholder="如：饭后服用" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm bg-white" />
+              </div>
+              <div class="flex gap-2">
+                <button id="saveMedBtn" class="flex-1 py-2 rounded-xl bg-primary text-white text-sm font-medium">保存计划</button>
+                <button id="cancelMedBtn" class="flex-1 py-2 rounded-xl border border-gray-200 text-text-sub text-sm">取消</button>
+              </div>
+            </div>
+          </div>
+          <p class="text-[11px] text-text-sub">提醒说明：需保持本页面打开且允许浏览器通知（Chrome/Edge 支持）；生产环境应使用服务端定时任务与推送渠道。</p>`);
+        document.getElementById('showMedForm').addEventListener('click', () => {
+          document.getElementById('medForm').classList.remove('hidden');
+          renderTimePointInputs(parseInt(document.getElementById('mTimes').value, 10));
+        });
+        document.getElementById('cancelMedBtn').addEventListener('click', () => document.getElementById('medForm').classList.add('hidden'));
+        document.getElementById('mTimes').addEventListener('change', () => renderTimePointInputs(parseInt(document.getElementById('mTimes').value, 10)));
+        document.getElementById('saveMedBtn').addEventListener('click', saveMedication);
+        loadMedsData();
+      }
+
+      function renderTimePointInputs(n) {
+        const box = document.getElementById('mTimePoints');
+        box.innerHTML = Array.from({ length: n }, (_, i) => `
+          <input data-tp type="time" value="${['08:00', '12:00', '18:00', '20:00'][i] || '08:00'}"
+            class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm bg-white" />`).join('');
+      }
+
+      async function loadMedsData() {
+        const [plans, checklist] = await Promise.all([
+          apiFetch('/api/medications'),
+          apiFetch('/api/medications/checklist/today'),
+        ]);
+        if (plans.status === 401) {
+          messageContainer.innerHTML = serviceShell('<p class="text-sm text-center py-8">登录已过期，请重新<a href="login.html" class="text-primary underline">登录</a></p>');
+          return;
+        }
+        renderMedChecklist(checklist.ok ? checklist.data : { items: [], taken: 0, total: 0 });
+        renderMedList(plans.ok ? (plans.data.medications || []) : []);
+        scheduleMedNotifications(checklist.ok ? checklist.data.items || [] : []);
+      }
+
+      function renderMedChecklist(cl) {
+        const items = cl.items || [];
+        const taken = cl.taken || 0, total = cl.total || 0;
+        const pct = total ? Math.round(taken / total * 100) : 0;
+        const box = document.getElementById('medsChecklist');
+        if (!box) return;
+        box.innerHTML = `
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <p class="text-sm font-medium">今日服药 <span class="text-text-sub text-xs">${cl.date || ''}</span></p>
+            <p class="text-xs text-text-sub tabular-nums">${taken}/${total} 已打卡</p>
+          </div>
+          <div class="h-2 rounded-full bg-white overflow-hidden mb-2.5">
+            <div class="h-full rounded-full bg-primary transition-all" style="width:${pct}%"></div>
+          </div>
+          ${items.length ? `<div class="space-y-1.5">${items.map(it => `
+            <div class="flex items-center justify-between gap-2 bg-white rounded-xl px-3 py-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xs text-text-sub tabular-nums shrink-0">${escapeHtml(it.time_point)}</span>
+                <span class="text-sm truncate ${it.taken ? 'text-text-sub/50 line-through' : 'text-text-main font-medium'}">${escapeHtml(it.medicine_name)}</span>
+              </div>
+              ${it.taken
+                ? '<span class="text-[11px] text-success shrink-0">✓ 已服用</span>'
+                : `<button data-med="${it.medication_id}" data-tp="${escapeHtml(it.time_point)}" class="take-btn text-[11px] px-2.5 py-1 rounded-lg bg-primary text-white shrink-0 hover:bg-primary-dark transition">打卡</button>`}
+            </div>`).join('')}</div>` : '<p class="text-xs text-text-sub text-center py-3">今天没有待服药物，可在下方新增用药计划</p>'}
+          ${total && taken === total ? '<p class="text-[11px] text-success mt-2 text-center">今日已全部按时服用</p>' : ''}`;
+        box.querySelectorAll('.take-btn').forEach(b => b.addEventListener('click', async () => {
+          const r = await apiFetch('/api/medications/logs', {
+            method: 'POST',
+            body: JSON.stringify({ medication_id: parseInt(b.dataset.med, 10), time_point: b.dataset.tp }),
+          });
+          if (!r.ok) alert('打卡失败：' + ((r.data && r.data.detail) || ''));
+          loadMedsData();
+        }));
+      }
+
+      function renderMedList(meds) {
+        const box = document.getElementById('medsList');
+        if (!box) return;
+        if (!meds.length) {
+          box.innerHTML = '<p class="text-xs text-text-sub text-center py-4">暂无用药计划</p>';
+          return;
+        }
+        box.innerHTML = `<div class="space-y-2">${meds.map(m => `
+          <div class="rounded-xl border ${m.active ? 'border-gray-200' : 'border-gray-100 opacity-60'} px-3 py-2.5 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">${escapeHtml(m.medicine_name)}</p>
+              <p class="text-[11px] text-text-sub mt-0.5">每日 ${m.times_per_day} 次 · ${(m.time_points || []).map(escapeHtml).join(' / ')}${m.note ? ' · ' + escapeHtml(m.note) : ''}</p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button data-med="${m.id}" data-active="${m.active ? 1 : 0}" class="toggle-btn text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 ${m.active ? 'text-text-sub hover:text-primary hover:border-primary' : 'text-primary border-primary'} transition">${m.active ? '停用' : '启用'}</button>
+              <button data-med="${m.id}" class="del-med-btn text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 text-text-sub hover:text-danger hover:border-danger transition">删除</button>
+            </div>
+          </div>`).join('')}</div>`;
+        box.querySelectorAll('.toggle-btn').forEach(b => b.addEventListener('click', async () => {
+          const active = b.dataset.active === '0';
+          const r = await apiFetch('/api/medications/' + b.dataset.med, { method: 'PUT', body: JSON.stringify({ active }) });
+          if (!r.ok) alert('操作失败：' + ((r.data && r.data.detail) || ''));
+          loadMedsData();
+        }));
+        box.querySelectorAll('.del-med-btn').forEach(b => b.addEventListener('click', async () => {
+          if (!confirm('确定删除该用药计划吗？')) return;
+          const r = await apiFetch('/api/medications/' + b.dataset.med, { method: 'DELETE' });
+          if (!r.ok) alert('删除失败：' + ((r.data && r.data.detail) || ''));
+          loadMedsData();
+        }));
+      }
+
+      async function saveMedication() {
+        const name = document.getElementById('mName').value.trim();
+        const times = parseInt(document.getElementById('mTimes').value, 10);
+        const points = Array.from(document.querySelectorAll('[data-tp]')).map(i => i.value).filter(Boolean);
+        const note = document.getElementById('mNote').value.trim();
+        if (!name) { alert('请填写药品名称'); return; }
+        if (points.length !== times) { alert('时间点数量应与服药次数一致'); return; }
+        const r = await apiFetch('/api/medications', {
+          method: 'POST',
+          body: JSON.stringify({ medicine_name: name, times_per_day: times, time_points: points, note }),
+        });
+        if (!r.ok) { alert('保存失败：' + ((r.data && r.data.detail) || '')); return; }
+        document.getElementById('medForm').classList.add('hidden');
+        document.getElementById('mName').value = '';
+        document.getElementById('mNote').value = '';
+        loadMedsData();
+      }
+
+      // 浏览器通知：每 30 秒检查一次，到点且未打卡则弹通知（本机演示方案）
+      function scheduleMedNotifications(items) {
+        if (medsTimer) { clearInterval(medsTimer); medsTimer = null; }
+        if (!items.length || !('Notification' in window)) return;
+        if (Notification.permission === 'default') Notification.requestPermission();
+        medsTimer = setInterval(() => {
+          if (Notification.permission !== 'granted') return;
+          const now = new Date();
+          const hm = pad(now.getHours()) + ':' + pad(now.getMinutes());
+          const today = now.toISOString().slice(0, 10);
+          items.forEach(it => {
+            if (it.taken) return;
+            const key = today + '|' + it.medication_id + '|' + it.time_point;
+            if (it.time_point === hm && !medsNotified[key]) {
+              medsNotified[key] = true;
+              new Notification('用药提醒', { body: `该服用「${it.medicine_name}」了（${it.time_point}）` });
+            }
+          });
+        }, 30000);
+      }
+      // ================== 服务七：健康数据趋势（体重/血压折线图） ==================
+      const TREND_METRICS = {
+        weight:   { label: '体重',    unit: 'kg',    step: 2.5, digits: 1, min: 30,  max: 200 },
+        systolic: { label: '收缩压',  unit: 'mmHg',  step: 10,  digits: 0, min: 60,  max: 220 },
+        diastolic:{ label: '舒张压',  unit: 'mmHg',  step: 10,  digits: 0, min: 40,  max: 140 },
+      };
+      let trendMetric = 'weight';
+      let trendDays = 30;
+      let trendCache = {}; // 已加载数据缓存（保持上一帧渲染：加载时图表降透明度而非清空）
+      async function renderTrendsPanel() {
+        if (!token) {
+          messageContainer.innerHTML = serviceShell(`
+            <div class="text-center py-8">
+              <p class="text-primary mb-3 flex justify-center">${ICONS.trend.replace('width="18"', 'width="32"').replace('height="18"', 'height="32"')}</p>
+              <p class="text-sm font-medium">健康数据趋势需要登录后使用</p>
+              <p class="text-xs text-text-sub mt-1">记录体重、血压，查看最近 7/30/90 天趋势</p>
+              <a href="login.html" class="inline-block mt-4 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium">去登录</a>
+            </div>`);
+          return;
+        }
+        messageContainer.innerHTML = serviceShell(`
+          <h3 class="text-base font-semibold mb-1 flex items-center gap-2">${ICONS.trend.replace('width="18"', 'width="20"').replace('height="18"', 'height="20"')}健康数据趋势</h3>
+          <p class="text-xs text-text-sub mb-3">记录体重与血压，查看变化趋势（数据仅用于自我健康管理）。</p>
+          <div id="trendTiles" class="grid grid-cols-3 gap-2 mb-3"></div>
+          <div class="rounded-2xl border border-gray-100 p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-text-sub mb-1">指标</label>
+                <select id="trendMetric" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm bg-white">
+                  ${Object.entries(TREND_METRICS).map(([k, v]) => `<option value="${k}" ${trendMetric === k ? 'selected' : ''}>${v.label}（${v.unit}）</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-text-sub mb-1">记录日期（默认今天）</label>
+                <input id="trendDate" type="date" value="${new Date().toISOString().slice(0, 10)}" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-text-sub mb-1">数值（<span id="trendUnitLabel">${TREND_METRICS[trendMetric].unit}</span>）</label>
+                <input id="trendValue" type="number" step="0.1" placeholder="如：65.5" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs text-text-sub mb-1">备注（选填）</label>
+                <input id="trendNote" maxlength="200" placeholder="如：晨起空腹" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm" />
+              </div>
+            </div>
+            <button id="trendSaveBtn" class="w-full mt-3 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-md shadow-primary/25">记录一条</button>
+          </div>
+          <!-- 筛选行：时间范围预设（一个筛选行，作用于下方图表与表格） -->
+          <div class="flex items-center gap-1.5 mt-4 mb-3">
+            <span class="text-xs text-text-sub mr-1">时间范围</span>
+            ${[7, 30, 90].map(d => `
+              <button data-days="${d}" class="days-chip text-xs px-3 py-1.5 rounded-full border transition ${trendDays === d ? 'bg-primary text-white border-primary' : 'border-gray-200 text-text-sub hover:border-primary hover:text-primary'}">近 ${d} 天</button>`).join('')}
+          </div>
+          <!-- 图表卡片（单序列折线：无图例，标题即指标名） -->
+          <div id="trendChartCard" class="viz-root rounded-2xl border border-gray-100 p-3" style="background: var(--surface-1);">
+            <p id="trendChartTitle" class="text-xs font-medium px-1" style="color: var(--text-secondary);">${TREND_METRICS[trendMetric].label}（${TREND_METRICS[trendMetric].unit}）· 近 ${trendDays} 天</p>
+            <div id="trendChartWrap" class="relative mt-1">
+              <svg id="trendChart" viewBox="0 0 600 240" class="w-full" style="display:block;"></svg>
+              <div id="trendTooltip" class="hidden absolute pointer-events-none rounded-lg px-2.5 py-1.5 shadow-md border" style="background: var(--surface-1); border-color: var(--grid-line); transform: translate(-50%, -110%);"></div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <p class="text-xs font-medium mb-1.5">记录列表（表格视图）</p>
+            <div id="trendTable"></div>
+          </div>
+          <p class="text-[11px] text-text-sub mt-3">* 数值仅供参考，异常请咨询医生；收缩压/舒张压建议分开查看趋势。</p>`);
+        document.getElementById('trendMetric').addEventListener('change', e => {
+          trendMetric = e.target.value;
+          document.getElementById('trendUnitLabel').textContent = TREND_METRICS[trendMetric].unit;
+          loadTrendRecords();
+        });
+        document.getElementById('trendSaveBtn').addEventListener('click', saveTrendRecord);
+        messageContainer.querySelectorAll('.days-chip').forEach(b => b.addEventListener('click', () => {
+          trendDays = parseInt(b.dataset.days, 10);
+          renderTrendsPanel();
+        }));
+        await loadTrendRecords();
+      }
+
+      async function loadTrendRecords() {
+        const res = await apiFetch(`/api/health/records?record_type=${trendMetric}&days=${trendDays}`);
+        const chart = document.getElementById('trendChart');
+        const wrap = document.getElementById('trendChartWrap');
+        if (!chart || !wrap) return;
+        if (res.status === 401) {
+          messageContainer.innerHTML = serviceShell('<p class="text-sm text-center py-8">登录已过期，请重新<a href="login.html" class="text-primary underline">登录</a></p>');
+          return;
+        }
+        if (!res.ok) {
+          // 保持上一帧渲染（降透明度提示）
+          chart.style.opacity = 0.4;
+          renderTrendTable([]);
+          renderTrendTiles(trendCache[trendMetric]);
+          return;
+        }
+        const records = res.data.records || [];
+        trendCache[trendMetric] = records;
+        chart.style.opacity = 1;
+        renderTrendTiles(records);
+        drawTrendChart(records);
+        renderTrendTable(records);
+      }
+
+      function renderTrendTiles(records) {
+        const box = document.getElementById('trendTiles');
+        if (!box) return;
+        const m = TREND_METRICS[trendMetric];
+        const latest = records && records.length ? records[records.length - 1] : null;
+        const values = records ? records.map(r => r.value) : [];
+        const hi = values.length ? Math.max(...values) : null;
+        const lo = values.length ? Math.min(...values) : null;
+        // stat tile 规范：label（句首小写无冒号）· value（Sans 半粗）· delta/说明（次级）
+        const tile = (label, valueHtml, sub) => `
+          <div class="bg-white rounded-xl border border-gray-100 px-3 py-2 text-center">
+            <p class="text-[10px] text-text-sub">${label}</p>
+            <p class="text-lg font-semibold tabular-nums mt-0.5">${valueHtml}</p>
+            <p class="text-[10px] text-text-sub/80 mt-0.5">${sub}</p>
+          </div>`;
+        box.innerHTML =
+          tile('最新值',
+            latest ? latest.value.toFixed(m.digits) + ' <span class="text-[10px] font-normal text-text-sub">' + m.unit + '</span>' : '—',
+            latest ? latest.record_date.slice(5) : '暂无记录') +
+          tile('区间最高',
+            hi != null ? hi.toFixed(m.digits) + ' <span class="text-[10px] font-normal text-text-sub">' + m.unit + '</span>' : '—',
+            hi != null && lo != null ? '最低 ' + lo.toFixed(m.digits) : '暂无记录') +
+          tile('记录条数', values.length, '近 ' + trendDays + ' 天');
+      }
+
+      // ---------- 单序列折线图（数据可视化规范：细线、8px 标记点、十字光标 + 工具提示、隐性网格） ----------
+      function niceStep(range, targetTicks) {
+        const raw = range / targetTicks;
+        const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        const norm = raw / mag;
+        const step = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
+        return step * mag;
+      }
+      function drawTrendChart(records) {
+        const svg = document.getElementById('trendChart');
+        const wrap = document.getElementById('trendChartWrap');
+        const tooltip = document.getElementById('trendTooltip');
+        const title = document.getElementById('trendChartTitle');
+        if (!svg || !wrap) return;
+        const m = TREND_METRICS[trendMetric];
+        title.textContent = `${m.label}（${m.unit}）· 近 ${trendDays} 天`;
+        const NS = 'http://www.w3.org/2000/svg';
+        const mk = (tag, attrs) => {
+          const el = document.createElementNS(NS, tag);
+          Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+          return el;
+        };
+        const W = 600, H = 240, P = { l: 46, r: 18, t: 14, b: 30 };
+        const iw = W - P.l - P.r, ih = H - P.t - P.b;
+        svg.innerHTML = '';
+        svg.style.opacity = 1;
+
+        if (!records.length) {
+          svg.appendChild(mk('text', { x: W / 2, y: H / 2, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }))
+            .textContent = '暂无记录，先在上方记录一条数据';
+          return;
+        }
+        // 数值范围：落在指标合理区间内，向外取整（y 轴刻度为干净数字）
+        let lo = Math.min(...records.map(r => r.value));
+        let hi = Math.max(...records.map(r => r.value));
+        if (lo === hi) { lo -= m.step; hi += m.step; }
+        lo = Math.max(m.min, Math.floor(lo / m.step) * m.step);
+        hi = Math.min(m.max, Math.ceil(hi / m.step) * m.step);
+        if (lo >= hi) { lo = m.min; hi = Math.max(hi, lo + m.step); }
+        const n = records.length;
+        const x = i => P.l + (n === 1 ? iw / 2 : i * iw / (n - 1));
+        const y = v => P.t + ih * (1 - (v - lo) / (hi - lo));
+
+        // 网格线（hairline，比基线更浅）+ y 轴刻度（干净数字）
+        const ticks = Math.max(3, Math.min(6, Math.round((hi - lo) / m.step) + 1));
+        const stepV = (hi - lo) / (ticks - 1);
+        for (let i = 0; i < ticks; i++) {
+          const v = lo + stepV * i;
+          const py = y(v);
+          svg.appendChild(mk('line', { x1: P.l, y1: py, x2: W - P.r, y2: py, stroke: 'var(--grid-line)', 'stroke-width': 1 }));
+          const t = mk('text', { x: P.l - 8, y: py + 3.5, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--muted)' });
+          t.textContent = Number.isInteger(v) ? String(v) : v.toFixed(1);
+          svg.appendChild(t);
+        }
+        // 基线（x 轴）
+        svg.appendChild(mk('line', { x1: P.l, y1: y(lo), x2: W - P.r, y2: y(lo), stroke: 'var(--axis)', 'stroke-width': 1 }));
+
+        // x 轴日期标签（最多 5 个，不重叠）
+        const labelIdx = n <= 5 ? records.map((_, i) => i) : [0, Math.floor((n - 1) / 4), Math.floor((n - 1) / 2), Math.floor(3 * (n - 1) / 4), n - 1].filter((v, i, a) => a.indexOf(v) === i);
+        labelIdx.forEach(i => {
+          const t = mk('text', { x: x(i), y: H - 8, 'text-anchor': i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle', 'font-size': 10, fill: 'var(--muted)' });
+          t.textContent = records[i].record_date.slice(5);
+          svg.appendChild(t);
+        });
+
+        // 折线（2px，圆角端点）
+        const linePath = records.map((r, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(r.value).toFixed(1)).join('');
+        svg.appendChild(mk('path', { d: linePath, fill: 'none', stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+
+        // 数据点标记（r=4 填充系列色 + 2px 表面色描边；命中区域放大到 24px 便于悬停）
+        records.forEach((r, i) => {
+          const px = x(i), py = y(r.value);
+          const hit = mk('circle', { cx: px, cy: py, r: 12, fill: 'transparent' });
+          hit.dataset.idx = i;
+          hit.style.cursor = 'crosshair';
+          svg.appendChild(hit);
+          svg.appendChild(mk('circle', { cx: px, cy: py, r: 4, fill: 'var(--series-1)', stroke: 'var(--ring)', 'stroke-width': 2 }));
+        });
+
+        // 直接标注：只标最后一个点（值在端点），文字用文本色而非系列色
+        const last = records[n - 1];
+        const lx = Math.min(x(n - 1) + 8, W - P.r - 34);
+        const lt = mk('text', { x: lx, y: y(last.value) + 3.5, 'font-size': 11, fill: 'var(--text-secondary)', 'font-weight': 600 });
+        lt.textContent = String(last.value.toFixed(m.digits));
+        svg.appendChild(lt);
+
+        // 十字光标：垂直参考线吸附最近数据点 + 统一工具提示
+        let cross = null;
+        const showTip = idx => {
+          const r = records[idx];
+          const px = x(idx), py = y(r.value);
+          if (!cross) {
+            cross = mk('line', { y1: P.t, y2: P.t + ih, stroke: 'var(--series-1)', 'stroke-width': 1, 'stroke-opacity': 0.45 });
+            svg.appendChild(cross);
+          }
+          cross.setAttribute('x1', px); cross.setAttribute('x2', px);
+          // 工具提示：数值在前（强调），日期/备注在后（次级）
+          tooltip.innerHTML = '';
+          const strong = document.createElement('p');
+          strong.style.cssText = 'font-size:13px;font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;';
+          strong.textContent = r.value.toFixed(m.digits) + ' ' + m.unit;
+          const sub = document.createElement('p');
+          sub.style.cssText = 'font-size:11px;color:var(--text-secondary);margin-top:1px;';
+          sub.textContent = r.record_date + (r.note ? ' · ' + r.note : '');
+          tooltip.appendChild(strong);
+          tooltip.appendChild(sub);
+          tooltip.classList.remove('hidden');
+          const rect = wrap.getBoundingClientRect();
+          const chartRect = svg.getBoundingClientRect();
+          tooltip.style.left = ((px / W) * chartRect.width) + 'px';
+          tooltip.style.top = ((py / H) * chartRect.height - 8) + 'px';
+        };
+        svg.addEventListener('mousemove', e => {
+          const rect = svg.getBoundingClientRect();
+          const sx = ((e.clientX - rect.left) / rect.width) * W;
+          // 吸附最近的数据点（十字光标负责定位 X）
+          let best = 0, bd = Infinity;
+          records.forEach((_, i) => { const d = Math.abs(x(i) - sx); if (d < bd) { bd = d; best = i; } });
+          showTip(best);
+        });
+        svg.addEventListener('mouseleave', () => {
+          if (cross) cross.remove(); cross = null;
+          tooltip.classList.add('hidden');
+        });
+        // 键盘可达：每个命中圆可聚焦并显示同一工具提示
+        svg.querySelectorAll('circle[data-idx]').forEach(c => {
+          c.setAttribute('tabindex', 0);
+          c.addEventListener('focus', () => showTip(parseInt(c.dataset.idx, 10)));
+          c.addEventListener('blur', () => { tooltip.classList.add('hidden'); if (cross) { cross.remove(); cross = null; } });
+        });
+      }
+
+      function renderTrendTable(records) {
+        const box = document.getElementById('trendTable');
+        if (!box) return;
+        if (!records.length) {
+          box.innerHTML = '<p class="text-xs text-text-sub text-center py-3">暂无记录</p>';
+          return;
+        }
+        const m = TREND_METRICS[trendMetric];
+        box.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-xs border-collapse min-w-[320px]">
+          <thead><tr class="bg-gray-50">
+            <th class="px-2.5 py-2 text-left font-medium text-text-sub border border-gray-100">日期</th>
+            <th class="px-2.5 py-2 text-left font-medium text-text-sub border border-gray-100 tabular-nums">${m.label}（${m.unit}）</th>
+            <th class="px-2.5 py-2 text-left font-medium text-text-sub border border-gray-100">备注</th>
+            <th class="px-2.5 py-2 border border-gray-100"></th>
+          </tr></thead>
+          <tbody>${[...records].reverse().map(r => `
+            <tr>
+              <td class="px-2.5 py-2 border border-gray-100 tabular-nums text-text-sub">${r.record_date}</td>
+              <td class="px-2.5 py-2 border border-gray-100 tabular-nums font-medium">${r.value.toFixed(m.digits)}</td>
+              <td class="px-2.5 py-2 border border-gray-100 text-text-sub">${escapeHtml(r.note || '—')}</td>
+              <td class="px-2.5 py-2 border border-gray-100 text-right"><button data-rid="${r.id}" class="del-record-btn text-[10px] px-2 py-1 rounded-md border border-gray-200 text-text-sub hover:text-danger hover:border-danger transition">删除</button></td>
+            </tr>`).join('')}</tbody>
+        </table></div>`;
+        box.querySelectorAll('.del-record-btn').forEach(b => b.addEventListener('click', async () => {
+          if (!confirm('删除这条记录吗？')) return;
+          const r = await apiFetch('/api/health/records/' + b.dataset.rid, { method: 'DELETE' });
+          if (!r.ok) alert('删除失败：' + ((r.data && r.data.detail) || ''));
+          loadTrendRecords();
+        }));
+      }
+
+      async function saveTrendRecord() {
+        const value = parseFloat(document.getElementById('trendValue').value);
+        const dateVal = document.getElementById('trendDate').value;
+        const note = document.getElementById('trendNote').value.trim();
+        const m = TREND_METRICS[trendMetric];
+        if (!Number.isFinite(value)) { alert('请填写数值'); return; }
+        if (value < m.min || value > m.max) { alert(`${m.label}数值应在 ${m.min}-${m.max} ${m.unit} 之间`); return; }
+        const r = await apiFetch('/api/health/records', {
+          method: 'POST',
+          body: JSON.stringify({ record_type: trendMetric, value, note, record_date: dateVal || null }),
+        });
+        if (!r.ok) { alert('保存失败：' + ((r.data && r.data.detail) || '')); return; }
+        document.getElementById('trendValue').value = '';
+        document.getElementById('trendNote').value = '';
+        loadTrendRecords();
+      }
+
+      // ================== 服务八：常见问题 FAQ ==================
+      let faqCategory = '';   // 当前分类（空 = 全部）
+      let faqKeyword = '';    // 关键词过滤
+      async function renderFaqPanel() {
+        messageContainer.innerHTML = serviceShell(`
+          <h3 class="text-base font-semibold mb-1 flex items-center gap-2">${ICONS.help.replace('width="18"', 'width="20"').replace('height="18"', 'height="20"')}常见问题</h3>
+          <p class="text-xs text-text-sub mb-3">预约挂号、检查检验、用药指导、就医流程等常见问答（通用科普，不针对个体诊疗）。</p>
+          <div class="flex gap-1.5 overflow-x-auto custom-scroll pb-2 mb-2" id="faqCatRow"></div>
+          <input id="faqSearch" maxlength="50" placeholder="搜索问题关键词，如：空腹" class="w-full px-3 py-2 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm mb-3" />
+          <div id="faqList"><p class="text-sm text-text-sub text-center py-6">加载中…</p></div>`);
+        const res = await apiFetch('/api/faq' + (faqCategory ? '?category=' + encodeURIComponent(faqCategory) : ''));
+        const categories = res.ok ? (res.data.categories || []) : [];
+        document.getElementById('faqCatRow').innerHTML = ['', ...categories.map(c => c.id)].map(cid => {
+          const label = cid === '' ? '全部' : categories.find(c => c.id === cid).name;
+          const count = cid === '' ? categories.reduce((s, c) => s + c.count, 0) : categories.find(c => c.id === cid).count;
+          return `<button data-cat="${cid}" class="cat-chip text-xs px-3 py-1.5 rounded-full border transition shrink-0 ${faqCategory === cid ? 'bg-primary text-white border-primary' : 'border-gray-200 text-text-sub hover:border-primary hover:text-primary'}">${label} ${count}</button>`;
+        }).join('');
+        document.getElementById('faqCatRow').querySelectorAll('.cat-chip').forEach(b => b.addEventListener('click', () => {
+          faqCategory = b.dataset.cat; renderFaqPanel();
+        }));
+        document.getElementById('faqSearch').addEventListener('input', e => {
+          faqKeyword = e.target.value.trim();
+          renderFaqList(res.ok ? res.data : null);
+        });
+        renderFaqList(res.ok ? res.data : null);
+      }
+
+      function renderFaqList(data) {
+        const box = document.getElementById('faqList');
+        if (!box) return;
+        let questions = data ? (data.questions || []) : [];
+        if (faqKeyword) {
+          const kw = faqKeyword.toLowerCase();
+          questions = questions.filter(q => (q.q + q.a).toLowerCase().includes(kw));
+        }
+        if (!questions.length) {
+          box.innerHTML = '<p class="text-xs text-text-sub text-center py-6">没有匹配的问答，换个关键词试试</p>';
+          return;
+        }
+        box.innerHTML = `<div class="space-y-2">${questions.map((q, i) => `
+          <details class="faq-item rounded-xl border border-gray-100 bg-white group" ${i === 0 && !faqKeyword ? 'open' : ''}>
+            <summary class="flex items-center justify-between gap-2 cursor-pointer select-none px-4 py-3 text-sm font-medium text-text-main hover:text-primary transition list-none [&::-webkit-details-marker]:hidden">
+              <span class="min-w-0">${escapeHtml(q.q)}</span>
+              <svg class="shrink-0 text-text-sub group-open:rotate-180 transition-transform" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="px-4 pb-3.5">
+              <p class="text-[11px] text-text-sub mb-1.5">${q.category ? '分类：' + escapeHtml(q.category) : ''}</p>
+              <p class="text-[13px] leading-relaxed text-text-main">${escapeHtml(q.a)}</p>
+            </div>
+          </details>`).join('')}</div>`;
+      }
+      // ================== 会话管理 ==================
+      const bottomBar = document.getElementById('bottomBar');
+      const sendBtn = document.getElementById('sendBtn');
+      const profileToggle = document.getElementById('profileToggle');
+      function createSession(mode) {
+        const id = (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        sessions.unshift({ id, mode, messages: [], updatedAt: Date.now() });
+        currentId = id;
+        sortSessions();
+        saveSessions();
+        renderSidebar();
+        return id;
+      }
+      function ensureSession() {
+        if (!sessions.find(s => s.id === currentId)) {
+          const mode = [MODE.CHAT, MODE.AGENT, MODE.SEARCH].includes(currentMode) ? currentMode : MODE.CHAT;
+          createSession(mode);
+        }
+      }
+      function switchSession(id) {
+        const s = sessions.find(x => x.id === id);
+        if (!s) return;
+        currentId = id;
+        const target = s.mode && [MODE.CHAT, MODE.AGENT, MODE.SEARCH].includes(s.mode) ? s.mode : MODE.CHAT;
+        switchMode(target);
+        renderSidebar();
+        closeSidebar();
+      }
+      function deleteSession(id) {
+        if (!confirm('删除该会话？删除后不可恢复。')) return;
+        sessions = sessions.filter(s => s.id !== id);
+        if (currentId === id) currentId = null;
+        saveSessions();
+        renderSidebar();
+        renderMessages();
+      }
+      function clearAllSessions() {
+        if (!sessions.length) return;
+        if (!confirm('清空全部历史会话？此操作不可恢复。')) return;
+        sessions = [];
+        currentId = null;
+        saveSessions();
+        renderSidebar();
+        renderMessages();
+      }
+      // 侧边栏事件委托：切换 / 删除会话
+      sessionList.addEventListener('click', e => {
+        const item = e.target.closest('.session-item');
+        if (!item) return;
+        if (e.target.closest('[data-action="delete"]')) deleteSession(item.dataset.id);
+        else switchSession(item.dataset.id);
+      });
+      document.getElementById('newChatBtn').addEventListener('click', () => {
+        const mode = [MODE.CHAT, MODE.AGENT, MODE.SEARCH].includes(currentMode) ? currentMode : MODE.CHAT;
+        createSession(mode);
+        switchMode(mode);
+        input.focus();
+      });
+      document.getElementById('clearAllBtn').addEventListener('click', clearAllSessions);
+
+      // ================== 模式切换（首页/服务模式隐藏输入区） ==================
+      function switchMode(mode) {
+        currentMode = mode;
+        closeFeatureMenu();
+        closeSidebar();
+        const isService = SERVICE_MODES.includes(mode);
+        bottomBar.classList.toggle('hidden', isService);
+        if (!isService) {
+          const meta = MODE_META[mode];
+          modeHint.textContent = meta ? meta.hint : '';
+          input.placeholder = meta ? meta.placeholder : '';
+        }
+        profileToggle.classList.toggle('hidden', mode !== MODE.AGENT);
+        if (mode === MODE.AGENT) refreshProfileToggle();
+        if (!isService) ensureSession();
+        renderMessages();
+        if (!isService) setTimeout(() => input.focus(), 0);
+      }
+      function updateSendState() {
+        sendBtn.disabled = isTyping;
+        sendBtn.classList.toggle('opacity-50', isTyping);
+        sendBtn.classList.toggle('cursor-not-allowed', isTyping);
+      }
+
+      // ================== 流式气泡（打字动画） ==================
+      function createStreamBubble(mode) {
+        const wrap = document.createElement('div');
+        wrap.className = 'flex justify-start gap-2.5';
+        const badge = mode === MODE.AGENT
+          ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-primary text-white font-medium">会诊报告</span>'
+          : mode === MODE.SEARCH
+            ? '<span class="text-[10px] px-2 py-0.5 rounded-full bg-primary/80 text-white font-medium">检索中</span>'
+            : '<span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-text-sub font-medium">快速问答</span>';
+        wrap.innerHTML = `
+          <div class="w-8 h-8 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0 mt-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div class="max-w-[85%] sm:max-w-[75%] min-w-0 flex-1">
             <div class="bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100 px-4 py-3">
               <div class="flex items-center justify-between mb-1 gap-2">
                 <p class="text-[11px] font-medium text-primary">AI 医疗助手</p>
                 ${badge}
               </div>
-              <p class="stream-status text-[11px] text-primary/80 mb-1 flex items-center gap-1.5">
-                <span class="typing-dot w-1.5 h-1.5 rounded-full bg-primary"></span>
-                <span class="status-text">${escapeHtml(statusText)}</span>
-              </p>
-              <div class="stream-content text-sm leading-relaxed whitespace-pre-wrap break-words text-text-main"></div>
-              <p class="stream-sources hidden text-[10px] text-text-sub mt-2 border-t border-gray-100 pt-2 leading-relaxed"></p>
+              <p class="stream-content text-sm leading-relaxed whitespace-pre-wrap break-words text-text-main min-h-[1.5rem]"></p>
+              <p class="text-[10px] text-text-sub text-right mt-1.5">${formatTime(Date.now())}</p>
             </div>
-            <p class="text-[10px] text-text-sub/80 mt-1 px-1">${AI_DISCLAIMER}</p>
           </div>`;
+        const contentEl = wrap.querySelector('.stream-content');
+        const dots = '<span class="typing-indicator inline-flex gap-0.5 ml-1 align-middle">'
+          + '<span class="typing-dot w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>'
+          + '<span class="typing-dot w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>'
+          + '<span class="typing-dot w-1.5 h-1.5 rounded-full bg-primary inline-block"></span></span>';
         return {
-          root,
-          card: root.querySelector('.bg-white'),
-          statusEl: root.querySelector('.stream-status'),
-          statusText: root.querySelector('.status-text'),
-          contentEl: root.querySelector('.stream-content'),
-          sourcesEl: root.querySelector('.stream-sources'),
+          wrap,
+          setContent(text) { contentEl.innerHTML = renderInlineMd(text) + dots; scrollToBottom(); },
+          showError(msg) { contentEl.innerHTML = '<span class="text-danger">' + escapeHtml(msg) + '</span>'; },
+          remove() { wrap.remove(); },
         };
       }
 
       // ================== 会诊过程面板（实时） ==================
-      function buildProcessPanel(planData) {
-        const isKnowledge = planData && planData.next_agent === 'rag';
-        const seq = isKnowledge ? ['plan', 'rag', 'answer'] : ['plan', 'inquiry', 'parallel', 'specialty', 'answer'];
-
-        const panel = document.createElement('div');
-        panel.className = 'bg-white/80 border border-primary-light rounded-2xl px-4 py-3 mb-2';
-        panel.innerHTML = `
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-xs font-semibold text-primary">🩺 会诊过程${isKnowledge ? '（知识问答捷径）' : '（完整流程）'}</p>
-            <span class="risk-badge hidden"></span>
-          </div>
-          <p class="plan-reason text-[11px] text-text-sub mt-1.5 leading-relaxed"></p>
-          <div class="stages mt-2 border-t border-gray-100 pt-2"></div>
-          <div class="rag-detail"></div>`;
-
-        const state = {
-          root: panel,
-          stagesEl: panel.querySelector('.stages'),
-          reasonEl: panel.querySelector('.plan-reason'),
-          riskBadgeEl: panel.querySelector('.risk-badge'),
-          ragDetailEl: panel.querySelector('.rag-detail'),
-          isKnowledge,
-          flow: isKnowledge ? 'knowledge' : 'consultation',
-          reason: (planData && planData.reason) || '',
-          pending: null,       // 当前执行中的阶段 key
-          items: {},           // key -> { status, elapsed, startedAt, el }
-          parallel: {},        // symptom/rag/risk -> { status, elapsed, startedAt, el }
+      function newAgentPanel() {
+        return {
+          flow: 'consultation',
+          reason: '',
+          stages: {},          // key → 'done'（plan/inquiry/rag/specialty/answer）
+          parallel: { symptom: 'pending', rag: 'pending', risk: 'pending' },
+          risk: null,
           ragDetail: '',
           ragChunks: 0,
-          risk: null,
-          sources: [],
         };
-
-        // 渲染阶段骨架
-        const itemsHtml = seq.map(key => {
+      }
+      function parallelDone(p) {
+        return p.parallel.symptom === 'done' && p.parallel.rag === 'done' && p.parallel.risk === 'done';
+      }
+      // 阶段状态推导：完成 → 执行中（第一个未完成）→ 等待中
+      function liveStatus(p, key) {
+        const order = p.flow === 'knowledge'
+          ? ['plan', 'rag', 'answer']
+          : ['plan', 'inquiry', 'parallel', 'specialty', 'answer'];
+        const own = key === 'parallel' ? (parallelDone(p) ? 'done' : null) : (p.stages[key] || null);
+        if (own === 'done') return 'done';
+        for (const k of order) {
+          const done = k === 'parallel' ? parallelDone(p) : p.stages[k] === 'done';
+          if (!done) return k === key ? 'running' : 'pending';
+        }
+        return 'done';
+      }
+      function liveProcessCard(p) {
+        const isKnowledge = p.flow === 'knowledge';
+        const seq = isKnowledge ? ['plan', 'rag', 'answer'] : ['plan', 'inquiry', 'parallel', 'specialty', 'answer'];
+        const icon = st => st === 'done'
+          ? '<span class="w-5 h-5 rounded-full bg-success/10 text-success flex items-center justify-center text-[11px] shrink-0">✓</span>'
+          : st === 'running'
+            ? '<span class="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center shrink-0 stage-running"><span class="w-2 h-2 rounded-full bg-primary"></span></span>'
+            : '<span class="w-5 h-5 rounded-full bg-gray-100 text-text-sub/40 flex items-center justify-center text-[11px] shrink-0">·</span>';
+        const txt = st => st === 'done' ? '<span class="text-[10px] text-success">完成</span>'
+          : st === 'running' ? '<span class="text-[10px] text-primary">执行中…</span>'
+          : '<span class="text-[10px] text-text-sub/50">等待中</span>';
+        const stageRow = key => {
           if (key === 'parallel') {
-            return `
-              <div class="parallel-row flex gap-2 mt-2">
-                ${['symptom', 'rag', 'risk'].map(k => `
-                  <div class="parallel-item flex-1 min-w-0 bg-white rounded-lg border border-gray-100 px-2 py-2" data-pkey="${k}">
-                    <p class="text-[10px] text-text-sub/70 text-center truncate">${AGENT_META[k].icon} ${AGENT_META[k].label}</p>
-                    <p class="p-status text-[10px] text-center mt-0.5 text-text-sub/40">等待中</p>
-                  </div>`).join('')}
-              </div>`;
+            const parSt = liveStatus(p, 'parallel');
+            const subs = ['symptom', 'rag', 'risk'].map(k => {
+              const st = p.parallel[k] === 'done' ? 'done' : parSt === 'running' ? 'running' : 'pending';
+              return `
+                <div class="flex-1 min-w-0 bg-white rounded-lg border border-gray-100 px-2.5 py-2">
+                  <p class="text-[10px] text-text-sub text-center truncate">${AGENT_META[k].label}</p>
+                  <p class="text-[10px] text-center mt-0.5 font-medium ${st === 'done' ? 'text-success' : st === 'running' ? 'text-primary' : 'text-text-sub/50'}">${st === 'done' ? '✓ 完成' : st === 'running' ? '执行中…' : '等待中'}</p>
+                </div>`;
+            }).join('');
+            return `<div class="flex gap-2 mt-2">${subs}</div>`;
           }
+          const st = liveStatus(p, key);
           return `
-            <div class="stage-item flex items-center gap-2.5 ${key === 'plan' ? '' : 'mt-2'}" data-key="${key}">
-              <span class="s-dot w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0 bg-gray-100 text-text-sub/50">·</span>
-              <span class="s-label text-xs font-medium text-text-sub/60">${AGENT_META[key].icon} ${AGENT_META[key].label}</span>
-              <span class="s-status text-[10px] text-text-sub/40">等待中</span>
+            <div class="flex items-center gap-2.5 ${key === 'plan' ? '' : 'mt-2'}">
+              ${icon(st)}
+              <span class="text-xs font-medium ${st === 'done' ? 'text-text-main' : st === 'running' ? 'text-primary' : 'text-text-sub/60'}">${AGENT_META[key].label}</span>
+              ${txt(st)}
             </div>`;
-        }).join('');
-        state.stagesEl.innerHTML = itemsHtml;
-
-        // 绑定阶段元素
-        state.stagesEl.querySelectorAll('.stage-item').forEach(el => {
-          state.items[el.dataset.key] = { el, status: 'waiting' };
-        });
-        state.stagesEl.querySelectorAll('.parallel-item').forEach(el => {
-          state.parallel[el.dataset.pkey] = { el, status: 'waiting' };
-        });
-
-        function setItemStatus(item, status, extraText) {
-          if (!item || item.status === 'done') return;
-          const wasWaiting = item.status === 'waiting';
-          item.status = status;
-          const dot = item.el.querySelector('.s-dot');
-          const label = item.el.querySelector('.s-label');
-          const stat = item.el.querySelector('.s-status');
-          if (status === 'running') {
-            item.startedAt = Date.now();
-            dot.className = 's-dot w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0 bg-primary text-white stage-running';
-            dot.textContent = '▶';
-            label.className = 's-label text-xs font-medium text-primary';
-            stat.textContent = '执行中…';
-            stat.className = 's-status text-[10px] text-primary';
-          } else { // done
-            const elapsed = item.startedAt ? ((Date.now() - item.startedAt) / 1000).toFixed(1) + 's' : '';
-            item.elapsed = elapsed;
-            dot.className = 's-dot w-5 h-5 rounded-full flex items-center justify-center text-[11px] shrink-0 bg-success/10 text-success';
-            dot.textContent = '✓';
-            label.className = 's-label text-xs font-medium text-text-main';
-            stat.textContent = extraText || ('完成' + (elapsed ? ' · ' + elapsed : ''));
-            stat.className = 's-status text-[10px] text-success';
-          }
-          if (wasWaiting && status === 'running') scrollToBottom();
-        }
-        function setParallelStatus(key, status, extraText) {
-          const item = state.parallel[key];
-          if (!item || item.status === 'done') return;
-          item.status = status;
-          const el = item.el;
-          const stat = el.querySelector('.p-status');
-          const title = el.querySelector('p');
-          if (status === 'running') {
-            item.startedAt = Date.now();
-            el.className = 'parallel-item flex-1 min-w-0 bg-primary-light/60 rounded-lg border border-primary/30 px-2 py-2';
-            title.className = 'text-[10px] text-primary text-center truncate';
-            stat.textContent = '执行中…';
-            stat.className = 'p-status text-[10px] text-center mt-0.5 text-primary';
-            scrollToBottom();
-          } else {
-            const elapsed = item.startedAt ? ((Date.now() - item.startedAt) / 1000).toFixed(1) + 's' : '';
-            item.elapsed = elapsed;
-            el.className = 'parallel-item flex-1 min-w-0 bg-white rounded-lg border border-gray-100 px-2 py-2';
-            title.className = 'text-[10px] text-text-sub text-center truncate';
-            stat.textContent = extraText || ('完成' + (elapsed ? ' · ' + elapsed : ''));
-            stat.className = 'p-status text-[10px] text-center mt-0.5 text-success';
-          }
-        }
-
-        // 面板操作接口
-        state.mark = function (key, status, extraText) {
-          if (key in state.items) setItemStatus(state.items[key], status, extraText);
-          else if (key in state.parallel) setParallelStatus(key, status, extraText);
         };
-        state.markDone = function (key, extraText) { state.mark(key, 'done', extraText); };
-        state.markRunning = function (key) { state.mark(key, 'running'); };
-        // Agent 事件到达：上一个执行中的阶段完成，新阶段开始执行
-        state.onAgent = function (key, data) {
-          if (state.pending && state.pending !== key) state.markDone(state.pending);
-          state.markRunning(key);
-          state.pending = key;
+        const riskBadge = p.risk && p.risk.level
+          ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${p.risk.level === '高风险' ? 'bg-red-50 text-danger' : p.risk.level === '中风险' ? 'bg-orange-50 text-warning' : 'bg-green-50 text-success'}">${escapeHtml(p.risk.level)}</span>`
+          : '';
+        const ragDetail = p.ragDetail
+          ? `<details class="mt-2 text-[11px] text-text-sub"><summary class="cursor-pointer select-none hover:text-primary transition">查看知识库检索详情（${p.ragChunks} 条）</summary><pre class="whitespace-pre-wrap mt-1.5 bg-gray-50 rounded-lg p-2 max-h-48 overflow-y-auto custom-scroll text-text-sub leading-relaxed">${escapeHtml(p.ragDetail)}</pre></details>`
+          : '';
+        return `
+          <div class="bg-white/70 border border-primary-light/70 rounded-2xl px-4 py-3 mb-2">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-semibold text-primary">会诊过程${isKnowledge ? '（知识问答捷径）' : '（完整流程）'}</p>
+              ${riskBadge}
+            </div>
+            <p class="text-[11px] text-text-sub mt-1.5 leading-relaxed">${escapeHtml(p.reason || 'Supervisor 正在规划会诊流程…')}</p>
+            <div class="mt-2 border-t border-gray-100 pt-2">
+              ${seq.map(stageRow).join('')}
+            </div>
+            ${ragDetail}
+          </div>`;
+      }
+      function renderLiveProcess(container, p) { container.innerHTML = liveProcessCard(p); }
+      // 收尾时把实时状态快照成历史消息可回放的结构（与 processCardHtml 对齐）
+      function snapshotPanel(p) {
+        const isKnowledge = p.flow === 'knowledge';
+        const order = isKnowledge ? ['plan', 'rag', 'answer'] : ['plan', 'inquiry', 'parallel', 'specialty', 'answer'];
+        return {
+          flow: p.flow,
+          reason: p.reason,
+          stages: order.filter(k => k !== 'parallel')
+            .map(k => ({ key: k, status: p.stages[k] === 'done' ? 'done' : 'pending' })),
+          parallel: ['symptom', 'rag', 'risk'].map(k => ({ key: k, status: p.parallel[k] })),
+          risk: p.risk,
+          ragDetail: p.ragDetail,
+          ragChunks: p.ragChunks,
         };
-        state.setRagDetail = function (text, chunks) {
-          state.ragDetail = text;
-          state.ragChunks = chunks;
-          state.ragDetailEl.innerHTML =
-            `<details class="mt-2 text-[11px] text-text-sub"><summary class="cursor-pointer select-none hover:text-primary transition">📚 查看知识库检索详情（${chunks} 条）</summary><pre class="whitespace-pre-wrap mt-1.5 bg-gray-50 rounded-lg p-2 max-h-48 overflow-y-auto custom-scroll text-text-sub leading-relaxed">${escapeHtml(text)}</pre></details>`;
-        };
-        state.setRisk = function (risk) {
-          state.risk = risk;
-          if (!risk) return;
-          const cls = risk.level === '高风险' ? 'bg-red-50 text-danger' : risk.level === '中风险' ? 'bg-orange-50 text-warning' : 'bg-green-50 text-success';
-          state.riskBadgeEl.className = 'risk-badge text-[10px] px-2 py-0.5 rounded-full font-medium ' + cls;
-          state.riskBadgeEl.textContent = '🛡️ ' + risk.level;
-        };
-        state.setSources = function (labels) { state.sources = labels; };
-        state.setReason = function (r) { state.reason = r; state.reasonEl.textContent = '🧭 ' + r; };
-        state.snapshot = function () {
-          const stages = Object.keys(state.items).map(k => {
-            const it = state.items[k];
-            return { key: k, status: it.status === 'waiting' ? 'waiting' : 'done', elapsed: it.elapsed };
-          });
-          const parallel = ['symptom', 'rag', 'risk'].map(k => {
-            const it = state.parallel[k];
-            return { key: k, status: it.status === 'waiting' ? 'waiting' : 'done', elapsed: it.elapsed };
-          });
-          return {
-            flow: state.flow,
-            reason: state.reason,
-            stages,
-            parallel,
-            ragDetail: state.ragDetail,
-            ragChunks: state.ragChunks,
-            risk: state.risk,
-            sources: state.sources,
-          };
-        };
-
-        // 初始：规划阶段直接完成并显示判断理由
-        state.reasonEl.textContent = '🧭 ' + (state.reason || 'Supervisor 已完成流程规划');
-        state.markDone('plan');
-        return state;
       }
 
-      // ================== 会话操作 ==================
-      function createSession() {
-        const id = 's_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-        const now = Date.now();
-        sessions.unshift({ id, title: '新的会话', messages: [], createdAt: now, updatedAt: now });
-        currentId = id;
-        saveSessions(); renderSidebar(); renderMessages();
-        return id;
-      }
-      function switchSession(id) {
-        if (isTyping) return;
-        currentId = id;
-        renderSidebar(); renderMessages();
-      }
-      function deleteSession(id) {
-        if (!confirm('确定删除该会话吗？')) return;
-        sessions = sessions.filter(s => s.id !== id);
-        if (currentId === id) currentId = sessions.length ? sessions[0].id : null;
-        saveSessions(); renderSidebar(); renderMessages();
-      }
-      function clearAll() {
-        if (!sessions.length) return;
-        if (!confirm('确定清空全部历史会话吗？此操作不可恢复。')) return;
-        sessions = []; currentId = null;
-        saveSessions(); renderSidebar(); renderMessages();
-      }
-
-      // 侧边栏事件委托
-      sessionList.addEventListener('click', e => {
-        const item = e.target.closest('.session-item');
-        if (!item) return;
-        const id = item.dataset.id;
-        if (e.target.closest('[data-action="delete"]')) { e.stopPropagation(); deleteSession(id); return; }
-        switchSession(id);
-        closeSidebar();
-      });
-      document.getElementById('newChatBtn').addEventListener('click', () => { createSession(); closeSidebar(); });
-      document.getElementById('clearAllBtn').addEventListener('click', clearAll);
-
-      // ================== 模式切换 ==================
-      function switchMode(mode) {
-        if (isTyping || mode === currentMode) return;
-        currentMode = mode;
-        const tabIds = ['tabChat', 'tabAgent', 'tabSearch', 'tabAppt', 'tabHospital', 'tabVision', 'tabProfile'];
-        tabIds.forEach(id => {
-          const t = document.getElementById(id);
-          const active = t.dataset.mode === mode;
-          t.className = 'flex-1 sm:flex-none sm:px-6 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 ' +
-            (active ? 'bg-primary text-white shadow-md shadow-primary/25' : 'text-text-sub hover:bg-gray-50');
-        });
-        modeHint.textContent = MODE_META[mode].hint;
-        input.placeholder = MODE_META[mode].placeholder;
-        // 服务模式隐藏输入框，内容区渲染对应服务面板
-        document.getElementById('inputBar').classList.toggle('hidden', SERVICE_MODES.includes(mode));
-        document.getElementById('profileToggle').classList.toggle('hidden', mode !== MODE.AGENT || !profileAvailable);
-        if (mode === MODE.AGENT) refreshProfileToggle();
-        renderMessages();
-        if (!SERVICE_MODES.includes(mode)) input.focus();
-      }
-      ['tabChat', 'tabAgent', 'tabSearch', 'tabAppt', 'tabHospital', 'tabVision', 'tabProfile'].forEach(id => {
-        const t = document.getElementById(id);
-        if (t) t.addEventListener('click', () => switchMode(t.dataset.mode));
-      });
-      let profileAvailable = false; // 已登录且档案已填写
-
-      // ================== 消息收发 ==================
-      function appendMessage(role, content, extra, silent) {
-        const session = sessions.find(s => s.id === currentId);
-        if (!session) return;
-        session.messages.push(Object.assign({ role, content, time: Date.now() }, extra || {}));
-        session.updatedAt = Date.now();
-        sortSessions();
-        saveSessions();
-        renderSidebar();
-        if (!silent) renderMessages();
-      }
-
-      // 通用 SSE 解析：逐行读 data: {...} 事件，回调处理
-      async function consumeSSE(resp, onEvent, onDone) {
+      // ================== SSE 通用解析 ==================
+      async function consumeSSE(resp, onEvent) {
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
         let buf = '';
-        let finished = false;
-        while (!finished) {
+        while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           buf += decoder.decode(value, { stream: true });
-          let nl;
-          while ((nl = buf.indexOf('\n')) >= 0) {
-            const line = buf.slice(0, nl).trim();
-            buf = buf.slice(nl + 1);
+          let idx;
+          while ((idx = buf.indexOf('\n')) >= 0) {
+            const line = buf.slice(0, idx).trim();
+            buf = buf.slice(idx + 1);
             if (!line.startsWith('data:')) continue;
             const payload = line.slice(5).trim();
-            if (payload === '[DONE]') { finished = true; break; }
-            let ev;
-            try { ev = JSON.parse(payload); } catch (e) { continue; }
-            onEvent(ev);
+            if (payload === '[DONE]') return;
+            try { onEvent(JSON.parse(payload)); } catch (e) { /* 忽略非法行 */ }
           }
         }
-        if (onDone) onDone();
+      }
+      // 组装后端历史：仅 user/assistant 文本消息，问诊追问按 assistant 传递
+      function buildHistory(session) {
+        return (session.messages || [])
+          .filter(m => m.role === 'user' || (m.role === 'assistant' && !m.results))
+          .map(m => ({ role: m.isQuestion ? 'assistant' : m.role, content: m.content }))
+          .filter(m => m.content)
+          .slice(-20);
+      }
+      function authHeaders(extra) {
+        const headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        return headers;
       }
 
+      // ================== 发送：按模式分流 ==================
       async function sendMessage() {
         const text = input.value.trim();
-        if (!text || isTyping || SERVICE_MODES.includes(currentMode)) return;
-
-        // 知识库检索模式：独立处理，不进会话历史
-        if (currentMode === MODE.SEARCH) { doSearch(text); return; }
-
-        if (!currentId) createSession();
-        appendMessage('user', text, { mode: currentMode });
+        if (!text || isTyping) return;
         input.value = '';
-        autoResize();
-
+        autoResize(input);
+        ensureSession();
         const session = sessions.find(s => s.id === currentId);
-        const history = session.messages
-          .filter(m => m.role === 'user' || m.role === 'assistant')
-          .slice(0, -1).slice(-20)
-          .map(m => ({ role: m.role, content: m.content }));
-
-        isTyping = true;
-        if (currentMode === MODE.AGENT) await streamAgent(text, history);
-        else await streamChat(text, history);
-        isTyping = false;
-        input.focus();
+        if (!session) return;
+        // 知识库检索：查询与结果成对落盘，由 doSearch 统一处理
+        if (currentMode === MODE.SEARCH) { await doSearch(session, text); return; }
+        session.messages.push({ role: 'user', content: text, time: Date.now() });
+        session.updatedAt = Date.now();
+        sortSessions();
+        saveSessions();
+        renderMessages();
+        scrollToBottom();
+        const history = buildHistory(session);
+        if (currentMode === MODE.CHAT) await streamChat(session, text, history);
+        else if (currentMode === MODE.AGENT) await streamAgent(session, text, history, document.getElementById('profileChk').checked);
       }
 
-      // ---------- 模式一：智能问答（/api/chat，大模型直接回答） ----------
-      async function streamChat(text, history) {
-        const bubble = createStreamBubble('正在思考…', MODE.CHAT);
-        messageContainer.appendChild(bubble.root);
+      // ---------- 智能问答（/api/chat SSE） ----------
+      async function streamChat(session, text, history) {
+        isTyping = true;
+        updateSendState();
+        const bubble = createStreamBubble(MODE.CHAT);
+        messageContainer.appendChild(bubble.wrap);
         scrollToBottom();
-        let gotContent = false;
+        let resp;
         try {
-          const headers = { 'Content-Type': 'application/json' };
-          if (token) headers['Authorization'] = 'Bearer ' + token;
-          const resp = await fetch(API_BASE + '/api/chat', {
-            method: 'POST', headers,
+          resp = await fetch(API_BASE + '/api/chat', {
+            method: 'POST', headers: authHeaders(),
             body: JSON.stringify({ message: text, history }),
           });
-          if (!resp.ok || !resp.body) throw new Error('服务异常（HTTP ' + resp.status + '）');
-          await consumeSSE(resp, ev => {
-            if (ev.content) {
-              bubble.contentEl.textContent += ev.content;
-              gotContent = true;
-              bubble.statusEl.classList.add('hidden');
-              scrollToBottom();
-            } else if (ev.error) {
-              bubble.contentEl.textContent = '⚠️ ' + ev.error;
-              gotContent = true;
-            }
-          });
-        } catch (err) {
-          bubble.contentEl.textContent = '⚠️ 请求失败：' + (err.message || '网络异常，请确认后端服务已启动');
-          gotContent = true;
-        } finally {
-          if (gotContent) appendMessage('assistant', bubble.contentEl.textContent, { mode: MODE.CHAT }, true);
-          else bubble.root.remove();
-        }
-      }
-
-      // ---------- 模式二：多智能体会诊（/api/agent/chat，全流程可视化） ----------
-      async function streamAgent(text, history) {
-        let panel = null;          // 会诊过程面板（plan 事件后创建）
-        let bubble = null;         // 当前流式回答气泡
-        let turnExtra = { mode: MODE.AGENT }; // 本轮首条 assistant 消息附加数据
-        let firstSaved = false;    // 过程面板只挂在第一条 assistant 消息上
-
-        function finalizeBubble(extra) {
-          if (!bubble) return;
-          const content = bubble.contentEl.textContent;
-          if (content) appendMessage('assistant', content, Object.assign({}, extra || {}), true);
-          else bubble.root.remove();
-          bubble = null;
-        }
-
-        try {
-          const headers = { 'Content-Type': 'application/json' };
-          if (token) headers['Authorization'] = 'Bearer ' + token;
-          const resp = await fetch(API_BASE + '/api/agent/chat', {
-            method: 'POST', headers,
-            body: JSON.stringify({
-              message: text, history,
-              // 会诊时携带健康档案（登录且已填档案时开关可见）
-              include_profile: !!(document.getElementById('profileChk') && document.getElementById('profileChk').checked),
-            }),
-          });
-          if (!resp.ok || !resp.body) throw new Error('服务异常（HTTP ' + resp.status + '）');
-
-          await consumeSSE(resp, ev => {
-            if (ev.type === 'plan') {
-              panel = buildProcessPanel(ev.data);
-              messageContainer.appendChild(panel.root);
-              scrollToBottom();
-            } else if (ev.type === 'agent') {
-              const name = ev.data && ev.data.name;
-              if (panel) {
-                panel.onAgent(name, ev.data);
-                // RAG 检索详情可展开查看
-                if (name === 'rag' && ev.data && ev.data.result) {
-                  const chunks = (ev.data.result.match(/\[(\d+)\]/g) || []).length;
-                  panel.setRagDetail(ev.data.result, chunks);
-                }
-                // 风险评估结果解析为徽章
-                if (name === 'risk' && ev.data && ev.data.result) {
-                  let risk = null;
-                  try { risk = JSON.parse(ev.data.result); } catch (e) { /* 非 JSON 则忽略 */ }
-                  if (risk && risk.risk_level) {
-                    panel.setRisk({ level: risk.risk_level });
-                    if (risk.risk_level === '高风险') {
-                      const warn = document.createElement('p');
-                      warn.className = 'text-[11px] text-danger font-medium mt-2 bg-red-50 rounded-lg px-2.5 py-1.5';
-                      warn.textContent = '🚨 风险评估为高风险，请立即就医';
-                      panel.stagesEl.appendChild(warn);
-                    }
-                  }
-                }
-              }
-            } else if (ev.type === 'question') {
-              // 问诊追问：结束当前输出段，追问以"医生追问"气泡展示
-              if (panel) { panel.markDone('inquiry', '已追问'); }
-              finalizeBubble(turnExtra);
-              appendMessage('assistant', ev.data, { mode: MODE.AGENT, isQuestion: true, process: panel ? panel.snapshot() : undefined });
-              firstSaved = true;
-              bubble = null;
-            } else if (ev.type === 'content') {
-              // 回答内容开始生成：把"生成回答"阶段推进为执行中
-              if (panel && panel.pending !== 'answer') panel.onAgent('answer', null);
-              if (!bubble) {
-                bubble = createStreamBubble('综合回答生成中…', MODE.AGENT);
-                messageContainer.appendChild(bubble.root);
-              }
-              bubble.contentEl.textContent += ev.data;
-              bubble.statusEl.classList.add('hidden');
-              scrollToBottom();
-            } else if (ev.type === 'done') {
-              const d = ev.data || {};
-              if (panel) {
-                panel.markDone(panel.pending || 'answer', undefined);
-                const labels = [...new Set((d.sources || []).map(sourceLabel))].slice(0, 4);
-                panel.setSources(labels);
-                if (bubble && labels.length) {
-                  bubble.sourcesEl.textContent = '📚 参考来源：' + labels.join('；');
-                  bubble.sourcesEl.classList.remove('hidden');
-                }
-              }
-              const extra = Object.assign({}, turnExtra);
-              if (d.risk_level) extra.risk_level = d.risk_level;
-              if (d.sources && d.sources.length) {
-                extra.sources = [...new Set(d.sources.map(sourceLabel))].slice(0, 4);
-              }
-              finalizeBubble(extra);
-            } else if (ev.type === 'error') {
-              finalizeBubble(turnExtra);
-              appendMessage('assistant', '⚠️ ' + (ev.data || '服务暂时不可用，请稍后重试'), { mode: MODE.AGENT });
-              firstSaved = true;
-            }
-          });
-        } catch (err) {
-          finalizeBubble(turnExtra);
-          appendMessage('assistant', '⚠️ 请求失败：' + (err.message || '网络异常，请确认后端服务已启动'), { mode: MODE.AGENT });
-          firstSaved = true;
-        } finally {
-          // 把过程面板快照挂到本轮第一条 assistant 消息上（供历史回放）
-          if (panel) {
-            const snap = panel.snapshot();
-            const session = sessions.find(s => s.id === currentId);
-            if (session) {
-              if (!firstSaved && session.messages.length && session.messages[session.messages.length - 1].role === 'assistant' && session.messages[session.messages.length - 1].mode === MODE.AGENT) {
-                session.messages[session.messages.length - 1].process = snap;
-              } else if (!firstSaved) {
-                // 没有回答内容：面板不展示（如错误中断）
-              }
-            }
-            saveSessions();
-          }
-          if (bubble) finalizeBubble(turnExtra);
-        }
-      }
-
-      // ---------- 模式三：知识库检索（/api/knowledge/search） ----------
-      async function doSearch(query) {
-        input.value = '';
-        autoResize();
-        const started = Date.now();
-        messageContainer.innerHTML = `
-          <div class="flex flex-col items-center justify-center py-16">
-            <div class="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center mb-3">
-              <div class="flex gap-1">
-                <span class="typing-dot w-1.5 h-1.5 rounded-full bg-primary"></span>
-                <span class="typing-dot w-1.5 h-1.5 rounded-full bg-primary"></span>
-                <span class="typing-dot w-1.5 h-1.5 rounded-full bg-primary"></span>
-              </div>
-            </div>
-            <p class="text-sm text-text-sub">正在检索医疗知识库…</p>
-            <p class="text-xs text-text-sub/70 mt-1">向量召回 + 重排精排</p>
-          </div>`;
-        try {
-          const headers = { 'Content-Type': 'application/json' };
-          if (token) headers['Authorization'] = 'Bearer ' + token;
-          const resp = await fetch(API_BASE + '/api/knowledge/search', {
-            method: 'POST', headers,
-            body: JSON.stringify({ query, top_k: 6, top_n: 3 }),
-          });
-          if (!resp.ok) throw new Error('服务异常（HTTP ' + resp.status + '）');
-          const data = await resp.json();
-          renderSearchResults(query, data, ((Date.now() - started) / 1000).toFixed(1));
-        } catch (err) {
-          messageContainer.innerHTML = `
-            <div class="flex flex-col items-center justify-center py-16">
-              <p class="text-3xl mb-3">😞</p>
-              <p class="text-sm text-text-main font-medium">检索失败</p>
-              <p class="text-xs text-text-sub mt-1">${escapeHtml(err.message || '网络异常，请确认后端服务已启动')}</p>
-              <button id="retrySearch" class="mt-4 text-xs px-4 py-2 rounded-full bg-primary text-white hover:bg-primary-dark transition">返回检索</button>
-            </div>`;
-          document.getElementById('retrySearch').addEventListener('click', () => renderMessages());
-        }
-      }
-      function renderSearchResults(query, data, seconds) {
-        const items = data.items || [];
-        if (!items.length) {
-          messageContainer.innerHTML = `
-            <div class="flex flex-col items-center justify-center py-16">
-              <p class="text-3xl mb-3">🔍</p>
-              <p class="text-sm text-text-main font-medium">未检索到相关知识</p>
-              <p class="text-xs text-text-sub mt-1">试试换个关键词，如"高血压""糖尿病"</p>
-            </div>`;
+        } catch (e) {
+          bubble.showError('无法连接服务器，请确认后端服务已启动');
+          isTyping = false; updateSendState();
           return;
         }
-        // 重排未启用（未配重排 API Key）时分数全为 0，此时只展示排序不展示百分比
-        const hasScores = items.some(it => it.score > 0);
-        const cards = items.map((it, i) => `
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-primary-light text-primary font-medium shrink-0">${hasScores ? '#' + (i + 1) + ' 相关度 ' + (it.score * 100).toFixed(0) + '%' : '#' + (i + 1) + ' 原文片段'}</span>
-              <span class="text-[11px] text-text-sub truncate">📄 ${escapeHtml(sourceLabel(it))}</span>
-            </div>
-            <p class="search-content line-clamp-4 text-[13px] leading-relaxed text-text-main whitespace-pre-wrap">${escapeHtml(it.content)}</p>
-            <button class="expand-btn text-[11px] text-primary mt-1.5 hover:underline" data-expanded="0">展开全文</button>
-          </div>`).join('');
-        messageContainer.innerHTML = `
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-sm font-medium text-text-main">检索结果：<span class="text-primary">命中 ${data.count} 条</span></p>
-            <p class="text-[11px] text-text-sub">耗时 ${seconds}s · 向量召回+重排</p>
-          </div>
-          <div class="text-[11px] text-text-sub mb-3 bg-primary-light/50 rounded-xl px-3 py-2">
-            查询："${escapeHtml(query)}" —— 知识源：《内科学》《外科学》（第10版）教材，共 8398 个知识片段
-          </div>
-          <div class="space-y-3">${cards}</div>
-          <button id="backToSearch" class="mt-5 text-xs px-4 py-2 rounded-full border border-gray-200 text-text-sub hover:text-primary hover:border-primary transition block mx-auto">继续检索</button>`;
-        // 展开/收起检索内容
-        messageContainer.querySelectorAll('.expand-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const content = btn.parentElement.querySelector('.search-content');
-            const expanded = btn.dataset.expanded === '1';
-            content.classList.toggle('line-clamp-4', expanded);
-            btn.textContent = expanded ? '展开全文' : '收起';
-            btn.dataset.expanded = expanded ? '0' : '1';
-          });
+        if (!resp.ok || !resp.body) {
+          let detail = '服务暂时不可用，请稍后重试';
+          try { const d = await resp.json(); if (d && typeof d.detail === 'string') detail = d.detail; } catch (e) {}
+          bubble.showError(detail);
+          isTyping = false; updateSendState();
+          return;
+        }
+        let content = '';
+        await consumeSSE(resp, ev => {
+          if (ev.content) { content += ev.content; bubble.setContent(content); }
+          else if (ev.error) bubble.showError(ev.error);
         });
-        document.getElementById('backToSearch').addEventListener('click', () => renderMessages());
-        scrollToBottom();
+        if (content) {
+          session.messages.push({ role: 'assistant', mode: MODE.CHAT, content, time: Date.now() });
+          session.updatedAt = Date.now();
+          sortSessions();
+          saveSessions();
+          renderMessages();
+        }
+        // 出错时保留气泡展示错误信息（下次渲染自然消失）
+        isTyping = false;
+        updateSendState();
       }
 
-      // 空状态推荐问题（点击即发送）
+      // ---------- 多智能体会诊（/api/agent/chat SSE：plan/agent/question/content/done） ----------
+      async function streamAgent(session, text, history, includeProfile) {
+        isTyping = true;
+        updateSendState();
+        const bubble = createStreamBubble(MODE.AGENT);
+        const panelEl = document.createElement('div');
+        messageContainer.appendChild(panelEl);
+        messageContainer.appendChild(bubble.wrap);
+        scrollToBottom();
+        const p = newAgentPanel();
+        renderLiveProcess(panelEl, p);
+
+        let resp;
+        try {
+          resp = await fetch(API_BASE + '/api/agent/chat', {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ message: text, history, include_profile: includeProfile }),
+          });
+        } catch (e) {
+          bubble.showError('无法连接服务器，请确认后端服务已启动');
+          isTyping = false; updateSendState();
+          return;
+        }
+        if (!resp.ok || !resp.body) {
+          let detail = '服务暂时不可用，请稍后重试';
+          try { const d = await resp.json(); if (d && typeof d.detail === 'string') detail = d.detail; } catch (e) {}
+          bubble.showError(detail);
+          isTyping = false; updateSendState();
+          return;
+        }
+
+        let content = '';
+        let askedQuestion = false;
+        const meta = { sources: [], risk_level: null };
+        await consumeSSE(resp, ev => {
+          const data = ev.data;
+          switch (ev.type) {
+            case 'plan':
+              p.flow = data && data.next_agent === 'rag' ? 'knowledge' : 'consultation';
+              p.reason = (data && data.reason) || '';
+              p.stages.plan = 'done';
+              renderLiveProcess(panelEl, p);
+              break;
+            case 'agent': {
+              const name = data && data.name;
+              if (name === 'inquiry') p.stages.inquiry = 'done';
+              else if (name === 'specialty') p.stages.specialty = 'done';
+              else if (name === 'rag') {
+                p.stages.rag = 'done';
+                p.parallel.rag = 'done';
+                p.ragDetail = (data && data.result) || '';
+                p.ragChunks = p.ragDetail ? (p.ragDetail.match(/\[\d+\]/g) || []).length : 0;
+              }
+              else if (name === 'symptom') p.parallel.symptom = 'done';
+              else if (name === 'risk') {
+                p.parallel.risk = 'done';
+                try { p.risk = typeof data.result === 'string' ? JSON.parse(data.result) : data.result; } catch (e) {}
+              }
+              renderLiveProcess(panelEl, p);
+              break;
+            }
+            case 'question': {
+              askedQuestion = true;
+              const q = data || '可以再详细描述一下你的症状吗？';
+              session.messages.push({ role: 'assistant', isQuestion: true, content: q, time: Date.now() });
+              session.updatedAt = Date.now();
+              sortSessions();
+              saveSessions();
+              renderMessages(); // 追问气泡取代流式占位（占位节点随之脱离文档，后续 remove 为无害空操作）
+              break;
+            }
+            case 'content':
+              if (!content) renderLiveProcess(panelEl, p); // 回答阶段开始
+              content += data || '';
+              bubble.setContent(content);
+              break;
+            case 'done':
+              if (data && data.risk_level) meta.risk_level = data.risk_level;
+              if (data && data.sources) meta.sources = data.sources || [];
+              break;
+            case 'error':
+              bubble.showError(data || '服务暂时不可用，请稍后重试');
+              break;
+          }
+        });
+
+        if (askedQuestion) {
+          // 追问轮：消息已落盘并渲染，只需清理占位
+          bubble.remove();
+          panelEl.remove();
+        } else if (content) {
+          p.stages.answer = 'done';
+          session.messages.push({
+            role: 'assistant', mode: MODE.AGENT, content, time: Date.now(),
+            process: snapshotPanel(p),
+            sources: meta.sources.map(s => sourceLabel(s)),
+            risk_level: meta.risk_level,
+          });
+          session.updatedAt = Date.now();
+          sortSessions();
+          saveSessions();
+          renderMessages();
+        }
+        // 无内容且无追问（出错/空回答）：保留气泡显示错误信息
+        isTyping = false;
+        updateSendState();
+      }
+
+      // ---------- 知识库检索（/api/knowledge/search） ----------
+      async function doSearch(session, query) {
+        isTyping = true;
+        updateSendState();
+        session.messages.push({ role: 'user', content: query, time: Date.now() });
+        session.updatedAt = Date.now();
+        sortSessions();
+        saveSessions();
+        renderMessages();
+        scrollToBottom();
+        const bubble = createStreamBubble(MODE.SEARCH);
+        messageContainer.appendChild(bubble.wrap);
+        scrollToBottom();
+        const res = await apiFetch('/api/knowledge/search', {
+          method: 'POST',
+          body: JSON.stringify({ query, top_k: 8, top_n: 5 }),
+        });
+        bubble.remove();
+        session.messages.push({
+          role: 'assistant', mode: MODE.SEARCH, content: '', time: Date.now(),
+          results: res.ok && res.data.items ? res.data.items : null,
+          error: res.ok ? null : ((res.data && res.data.detail) || '检索失败，请稍后重试'),
+        });
+        session.updatedAt = Date.now();
+        sortSessions();
+        saveSessions();
+        renderMessages();
+        isTyping = false;
+        updateSendState();
+      }
+      function searchResultBubble(m) {
+        if (m.error) {
+          return `
+            <div class="flex justify-start gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0 mt-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </div>
+              <div class="max-w-[85%] sm:max-w-[75%]">
+                <div class="bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100 px-4 py-3">
+                  <p class="text-[11px] font-medium text-primary mb-1">知识库检索</p>
+                  <p class="text-sm text-danger">${escapeHtml(m.error)}</p>
+                  <p class="text-[10px] text-text-sub text-right mt-1.5">${formatTime(m.time)}</p>
+                </div>
+              </div>
+            </div>`;
+        }
+        const items = m.results || [];
+        const rows = items.length ? items.map((it, i) => `
+          <div class="rounded-xl border border-gray-100 bg-gray-50/70 p-3 mb-2 last:mb-0">
+            <p class="text-[11px] font-medium text-text-sub mb-1">片段 ${i + 1}</p>
+            <p class="text-[13px] leading-relaxed text-text-main">${renderInlineMd(it.content || '')}</p>
+            <p class="text-[10px] text-text-sub mt-1.5">来源：${escapeHtml(sourceLabel(it))}${typeof it.score === 'number' ? ' · 相关度 ' + it.score.toFixed(3) : ''}</p>
+          </div>`).join('')
+          : '<p class="text-xs text-text-sub text-center py-2">未检索到相关内容，换个关键词试试</p>';
+        return `
+          <div class="flex justify-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0 mt-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </div>
+            <div class="max-w-[85%] sm:max-w-[75%]">
+              <div class="bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100 px-4 py-3">
+                <div class="flex items-center justify-between mb-1.5 gap-2">
+                  <p class="text-[11px] font-medium text-primary">知识库检索</p>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-text-sub font-medium">${items.length} 条结果</span>
+                </div>
+                ${rows}
+                <p class="text-[10px] text-text-sub text-right mt-1.5">${formatTime(m.time)}</p>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      // ================== 输入交互 ==================
+      function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+      }
+      input.addEventListener('input', () => autoResize(input));
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMessage(); }
+      });
+      sendBtn.addEventListener('click', sendMessage);
+      // 快捷提问 chip：首页/服务面板跳转到智能问答，咨询模式直接发送
       messageContainer.addEventListener('click', e => {
         const chip = e.target.closest('[data-chip]');
-        if (chip) { input.value = chip.textContent.trim(); autoResize(); sendMessage(); }
+        if (!chip || isTyping) return;
+        input.value = chip.textContent.trim();
+        if (SERVICE_MODES.includes(currentMode)) switchMode(MODE.CHAT);
+        sendMessage();
       });
 
-      // ================== 输入框交互 ==================
-      function autoResize() {
-        input.style.height = 'auto';
-        input.style.height = Math.min(input.scrollHeight, 140) + 'px';
-      }
-      input.addEventListener('input', autoResize);
-      input.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-      document.getElementById('sendBtn').addEventListener('click', sendMessage);
-
-      // ================== 登录态 UI ==================
-      function setUserUI(name, isGuest) {
-        document.getElementById('userName').textContent = name;
-        document.getElementById('userAvatar').textContent = name.charAt(0);
-        const btn = document.getElementById('logoutBtn');
-        if (isGuest) {
-          btn.title = '登录';
-          btn.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/>
-            </svg>
-            <span id="logoutLabel" class="hidden sm:inline">登录</span>`;
+      // ================== 认证 UI ==================
+      const userAvatar = document.getElementById('userAvatar');
+      const userNameEl = document.getElementById('userName');
+      const logoutBtnEl = document.getElementById('logoutBtn');
+      userAvatar.style.cursor = 'pointer';
+      userNameEl.style.cursor = 'pointer';
+      function setUserUI(name) {
+        if (name) {
+          userAvatar.textContent = name.slice(0, 1).toUpperCase();
+          userNameEl.textContent = name;
+          logoutBtnEl.classList.remove('hidden');
         } else {
-          btn.title = '退出登录';
-          btn.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>
-            </svg>
-            <span id="logoutLabel" class="hidden sm:inline">退出</span>`;
+          userAvatar.textContent = '医';
+          userNameEl.textContent = '未登录';
+          logoutBtnEl.classList.add('hidden');
         }
       }
       async function initAuth() {
-        if (!token) { setUserUI('访客', true); return; }
-        try {
-          const res = await fetch(API_BASE + '/api/auth/me', {
-            headers: { 'Authorization': 'Bearer ' + token },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setUserUI(data.username || username || '用户', false);
-            refreshProfileToggle();
-            return;
-          }
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(USER_KEY);
-        } catch (err) {
-          setUserUI(username || '用户', false);
-          return;
-        }
-        setUserUI('访客', true);
+        if (!token) { setUserUI(null); return; }
+        const r = await apiFetch('/api/auth/me');
+        setUserUI(r.ok && r.data.username ? r.data.username : null);
       }
-
-      // ================== 退出登录 ==================
-      document.getElementById('logoutBtn').addEventListener('click', async () => {
-        if (localStorage.getItem(TOKEN_KEY)) {
-          if (!confirm('确定退出登录吗？')) return;
-          try {
-            await fetch(API_BASE + '/api/auth/logout', {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY) },
-            });
-          } catch (e) { /* 后端不可达时仍允许本地退出 */ }
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(USER_KEY);
-          window.location.reload();
-        } else {
-          window.location.replace('login.html');
-        }
+      const goProfileOrLogin = () => { token ? switchMode(MODE.PROFILE) : location.href = 'login.html'; };
+      userAvatar.addEventListener('click', goProfileOrLogin);
+      userNameEl.addEventListener('click', goProfileOrLogin);
+      logoutBtnEl.addEventListener('click', async () => {
+        if (token) { try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch (e) {} }
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        location.href = 'login.html';
       });
 
       // ================== 初始化 ==================
       loadSessions();
-      sortSessions();
-      if (sessions.length) currentId = sessions[0].id;
-      modeHint.textContent = MODE_META[MODE.CHAT].hint;
-      input.placeholder = MODE_META[MODE.CHAT].placeholder;
+      currentId = sessions.length ? sessions[0].id : null;
       renderSidebar();
-      renderMessages();
+      switchMode(MODE.HOME);
       initAuth();
+      loadHomeStats().then(() => { if (currentMode === MODE.HOME) renderHome(); });
     })();
   </script>
 </body>

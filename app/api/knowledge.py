@@ -2,7 +2,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from app.agent.rag_agent import RagAgent
 from app.dao import knowledge_dao
 
 router = APIRouter(prefix="/api/knowledge", tags=["知识库"])
@@ -19,6 +18,8 @@ class KnowledgeSearchRequest(BaseModel):
 @router.post("/search")
 def search_knowledge(req: KnowledgeSearchRequest):
     """向量检索 + 重排，返回相关知识片段（含来源和页码）"""
+    from app.agent.rag_agent import RagAgent  # 懒加载：向量库依赖首次检索时才导入
+
     agent = RagAgent()
     items = agent.search(req.query, top_k=req.top_k, top_n=req.top_n)
     return {"query": req.query, "count": len(items), "items": items}
