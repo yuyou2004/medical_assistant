@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from app.config import settings
-from app.dao import user_dao
+from app.dao import profile_dao, user_dao
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/auth", tags=["认证"])
@@ -21,13 +21,21 @@ _tokens_lock = threading.Lock()
 
 
 class RegisterRequest(BaseModel):
+    """注册请求：账号 + 密码"""
     username: str = Field(..., min_length=2, max_length=20, pattern=r"^[\w一-龥]+$")
     password: str = Field(..., min_length=6, max_length=64)
 
 
 class LoginRequest(BaseModel):
+    """登录请求：账号 + 密码"""
     username: str = Field(..., min_length=1, max_length=20)
     password: str = Field(..., min_length=1, max_length=64)
+
+
+class ChangePasswordRequest(BaseModel):
+    """修改密码请求：旧密码 + 新密码"""
+    old_password: str = Field(..., min_length=1, max_length=64)
+    new_password: str = Field(..., min_length=6, max_length=64)
 
 
 def _require_db() -> None:
@@ -55,7 +63,7 @@ def login(req: LoginRequest) -> dict:
     """登录，成功返回访问令牌"""
     _require_db()
     if not user_dao.verify_user(req.username, req.password):
-        raise HTTPException(status_code=401, detail="用户名或密码错误")
+        raise HTTPException(status_code=401, detail="账号或密码错误")
     token = secrets.token_hex(32)
     with _tokens_lock:
         _tokens[token] = {
@@ -98,7 +106,27 @@ def get_current_user(authorization: str | None = Header(default=None)) -> str:
 @router.get("/me")
 def me(username: str = Depends(get_current_user)) -> dict:
     """当前登录用户信息（前端首屏用于校验本地令牌是否有效）"""
-    return {"username": username}
+    created_at = None
+    real_name = ""
+    if settings.DB_ENABLED:
+        u = user_dao.get_user(username)
+        if u:
+            created_at = u.get("created_at")
+        p = profile_dao.get_profile(username)
+        real_name = (p or {}).get("real_name", "")
+    return {"username": username, "real_name": real_name, "created_at": created_at}
+
+
+@router.post("/change-password")
+def change_password(req: ChangePasswordRequest, username: str = Depends(get_current_user)) -> dict:
+    """修改当前登录用户密码（需校验旧密码）"""
+    _require_db()
+    if req.old_password == req.new_password:
+        raise HTTPException(status_code=400, detail="新密码不能与旧密码相同")
+    ok, msg = user_dao.change_password(username, req.old_password, req.new_password)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    return {"message": msg}
 
 
 @router.post("/logout")

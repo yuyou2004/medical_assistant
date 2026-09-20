@@ -2,8 +2,13 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>登录 - 多智能体协同 RAG 医疗咨询助手</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>登录 - ClinicMind Health Assistant</title>
+
+  <!-- 字体：Inter（拉丁/数字）+ Noto Sans SC（中文），工整高级的无衬线字族 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- CDN 引入 Tailwind CSS v3（无需本地依赖） -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,110 +17,121 @@
       theme: {
         extend: {
           colors: {
-            primary: '#165DFF',
-            'primary-dark': '#0E42D2',
-            'primary-light': '#E8F3FF',
-            'text-main': '#1D2129',
-            'text-sub': '#6E7681',
-            danger: '#F53F3F',
-            success: '#00B42A'
+            primary: '#5B2C6F',        // 主色：手术服深紫
+            'primary-dark': '#452256', // 主色加深（hover）
+            'primary-light': '#F1EAF6',// 辅助浅紫（标签/浅底）
+            'text-main': '#1D2129',    // 文字主色
+            'text-sub': '#6E7681',     // 次要文字
+            danger: '#F53F3F'          // 危险提示色
           }
         }
       }
     }
   </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", "Helvetica Neue", sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+    h1, h2, h3 { letter-spacing: -0.01em; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp .5s ease both; }
+  </style>
 </head>
 
-<body class="min-h-screen bg-[#F7F9FC] flex flex-col"
-      style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;">
-  <main class="flex-1 flex items-center justify-center p-4 py-10">
-    <div class="w-full max-w-md">
-      <!-- 品牌区 -->
-      <div class="text-center mb-7">
-        <div class="w-14 h-14 rounded-2xl bg-primary-light flex items-center justify-center text-primary mx-auto mb-4">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-        </div>
-        <h1 class="text-xl font-semibold text-text-main tracking-tight">多智能体协同 RAG 医疗咨询助手</h1>
-        <p class="text-sm text-text-sub mt-1.5">会诊流程透明 · 教材知识库检索 · 医疗服务一站直达</p>
-      </div>
+<body class="min-h-screen bg-[#6F4E9C] text-text-main antialiased overflow-x-hidden">
+  <!-- 背景：淡紫渐变（呼吸感、通透）+ 柔和光晕 -->
+  <div class="fixed inset-0 -z-10 bg-gradient-to-br from-[#8A68B5] via-[#6F4E9C] to-[#5B3D85]"></div>
+  <div class="fixed -z-10 top-[-120px] right-[-80px] w-[340px] h-[340px] rounded-full bg-[#A98CD0] opacity-30 blur-3xl"></div>
+  <div class="fixed -z-10 bottom-[-120px] left-[-80px] w-[320px] h-[320px] rounded-full bg-[#B49BD8] opacity-25 blur-3xl"></div>
+
+  <div class="min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-md animate-fade-up">
 
       <!-- 登录卡片 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-        <!-- 登录 / 注册切换 -->
-        <div class="flex bg-gray-100 rounded-xl p-1 mb-6">
-          <button id="loginTab" class="flex-1 py-2 rounded-lg text-sm font-medium bg-white text-primary shadow-sm transition">登录</button>
-          <button id="registerTab" class="flex-1 py-2 rounded-lg text-sm font-medium text-text-sub hover:text-text-main transition">注册</button>
+      <div class="bg-white rounded-2xl shadow-[0_18px_50px_-12px_rgba(91,44,111,0.25)] p-8 sm:p-10">
+
+        <!-- 标题 -->
+        <div class="flex flex-col items-center text-center mb-8">
+          <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-text-main leading-none">ClinicMind</h1>
+          <p class="text-lg sm:text-xl font-semibold tracking-wide text-primary leading-none mt-1.5">Health Assistant</p>
+
+          <!-- 功能标签 -->
+          <div class="flex flex-wrap justify-center gap-2 mt-4">
+            <span class="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary">预约挂号</span>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary">报告查询</span>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary">健康提醒</span>
+          </div>
         </div>
 
-        <!-- 表单 -->
-        <form id="authForm" autocomplete="off">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm text-text-main font-medium mb-1.5">用户名</label>
-              <input id="username" type="text" maxlength="20" placeholder="2-20 位字母、数字、下划线或中文"
-                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
+        <!-- 登录表单 -->
+        <form id="loginForm" class="space-y-5" novalidate>
+          <div>
+            <label for="username" class="block text-sm font-medium mb-2 text-text-main">账号</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-sub">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input id="username" type="text" maxlength="20" autocomplete="username"
+                class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-[#F8F9FB] text-sm text-text-main placeholder:text-text-sub/70 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder="请输入账号" />
             </div>
-            <div>
-              <label class="block text-sm text-text-main font-medium mb-1.5">密码</label>
-              <div class="relative">
-                <input id="password" type="password" maxlength="64" placeholder="6-64 位字符"
-                  class="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
-                <!-- 显示 / 隐藏密码 -->
-                <button type="button" id="togglePwd" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-sub hover:text-primary transition" aria-label="显示密码">
-                  <svg id="eyeOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                  <svg id="eyeClosed" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <!-- 注册专用：确认密码 -->
-            <div id="confirmWrap" class="hidden">
-              <label class="block text-sm text-text-main font-medium mb-1.5">确认密码</label>
-              <input id="confirmPwd" type="password" maxlength="64" placeholder="再次输入密码"
-                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm transition bg-[#FAFCFF]" />
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-medium mb-2 text-text-main">密码</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-sub">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input id="password" type="password" autocomplete="current-password"
+                class="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 bg-[#F8F9FB] text-sm text-text-main placeholder:text-text-sub/70 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder="请输入密码" />
+              <!-- 密码显示/隐藏切换 -->
+              <button type="button" id="togglePwd" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-sub hover:text-primary transition" aria-label="显示/隐藏密码">
+                <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
             </div>
           </div>
 
           <!-- 错误提示 -->
-          <p id="errorMsg" class="hidden text-danger text-xs mt-3 bg-red-50 rounded-lg px-3 py-2 leading-relaxed"></p>
+          <p id="errorMsg" class="hidden text-sm text-danger"></p>
 
-          <!-- 提交按钮 -->
-          <button type="submit" id="submitBtn"
-            class="w-full mt-6 py-3 rounded-xl bg-primary hover:bg-primary-dark active:scale-[0.98] text-white text-sm font-semibold shadow-md shadow-primary/25 transition disabled:opacity-60 disabled:active:scale-100">
+          <button id="submitBtn" type="submit"
+            class="w-full py-3 rounded-xl bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-medium text-[15px] shadow-lg shadow-primary/30 transition disabled:opacity-60 disabled:cursor-not-allowed">
             登 录
           </button>
         </form>
 
-        <!-- 访客入口（无需注册，本地体验） -->
-        <button id="guestBtn" class="w-full mt-3 py-2.5 rounded-xl border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/30 text-sm transition">
+        <!-- 注册入口 -->
+        <p class="mt-6 text-center text-sm text-text-sub">
+          还没有账号？
+          <a href="register.html" class="text-primary font-medium hover:underline underline-offset-4">一键注册</a>
+        </p>
+
+        <!-- 访客入口（无需登录，本地体验） -->
+        <button id="guestBtn" class="w-full mt-4 py-2.5 rounded-xl border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/30 text-sm transition">
           暂不登录，以访客身份进入 →
         </button>
       </div>
 
-      <!-- 功能一览（登录后可用） -->
-      <div class="flex flex-wrap justify-center gap-1.5 mt-6">
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">智能问答</span>
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">多智能体会诊</span>
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">知识库检索</span>
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">预约挂号</span>
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">附近医院</span>
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">体检报告解读</span>
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">用药提醒</span>
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">健康数据趋势</span>
-        <span class="text-[11px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-text-sub">常见问题</span>
-      </div>
-
-      <p class="flex items-start justify-center gap-1.5 text-center text-[11px] text-text-sub mt-6 leading-relaxed px-4">
-        <svg class="shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span>AI 医疗助手仅提供健康科普参考，不构成医疗诊断，如有身体不适，请及时前往医院就诊。</span>
+      <!-- 底部安全提示 -->
+      <p class="text-center text-xs text-white/70 mt-6 px-4 leading-relaxed">
+        ⚠️ 本产品仅供健康科普参考，不构成医疗诊断，如有身体不适请及时线下就医
       </p>
     </div>
-  </main>
+  </div>
 
   <script>
     (function () {
@@ -123,47 +139,25 @@
       const USER_KEY  = 'rag_med_username';
       const API_BASE  = '';
 
-      let isRegister = false;
+      // 已登录则直接跳转聊天页，避免重复登录
+      if (localStorage.getItem(TOKEN_KEY)) {
+        window.location.replace('index.html');
+        return;
+      }
 
-      const loginTab = document.getElementById('loginTab');
-      const registerTab = document.getElementById('registerTab');
-      const confirmWrap = document.getElementById('confirmWrap');
-      const errorMsg = document.getElementById('errorMsg');
-      const submitBtn = document.getElementById('submitBtn');
-      const form = document.getElementById('authForm');
+      const form = document.getElementById('loginForm');
       const usernameInput = document.getElementById('username');
       const passwordInput = document.getElementById('password');
+      const errorMsg = document.getElementById('errorMsg');
+      const submitBtn = document.getElementById('submitBtn');
 
-      // ================== 登录 / 注册切换 ==================
-      function switchTab(register) {
-        isRegister = register;
-        loginTab.className = 'flex-1 py-2 rounded-lg text-sm font-medium transition ' +
-          (register ? 'text-text-sub hover:text-text-main' : 'bg-white text-primary shadow-sm');
-        registerTab.className = 'flex-1 py-2 rounded-lg text-sm font-medium transition ' +
-          (register ? 'bg-white text-primary shadow-sm' : 'text-text-sub hover:text-text-main');
-        confirmWrap.classList.toggle('hidden', !register);
-        submitBtn.textContent = register ? '注 册' : '登 录';
-        hideError();
-      }
-      loginTab.addEventListener('click', () => switchTab(false));
-      registerTab.addEventListener('click', () => switchTab(true));
-
-      // ================== 显示 / 隐藏密码 ==================
-      document.getElementById('togglePwd').addEventListener('click', () => {
-        const show = passwordInput.type === 'password';
-        passwordInput.type = show ? 'text' : 'password';
-        document.getElementById('eyeOpen').classList.toggle('hidden', show);
-        document.getElementById('eyeClosed').classList.toggle('hidden', !show);
-      });
-
-      // ================== 错误提示 ==================
       function showError(msg) {
         errorMsg.textContent = msg;
         errorMsg.classList.remove('hidden');
       }
       function hideError() { errorMsg.classList.add('hidden'); }
 
-      // ================== 请求封装 ==================
+      // 请求封装：统一处理网络异常 / 后端未启动 / 非 JSON 响应 / 业务错误
       async function postJson(path, body) {
         let resp;
         try {
@@ -173,7 +167,6 @@
             body: JSON.stringify(body),
           });
         } catch (e) {
-          // 网络异常 / 后端未启动
           showError('无法连接服务器，请确认后端服务已启动后重试。');
           return null;
         }
@@ -190,63 +183,47 @@
         return data;
       }
 
-      // ================== 表单提交 ==================
-      form.addEventListener('submit', async e => {
+      // 密码显示/隐藏
+      const eyeIcon = document.getElementById('eyeIcon');
+      document.getElementById('togglePwd').addEventListener('click', () => {
+        const isPwd = passwordInput.type === 'password';
+        passwordInput.type = isPwd ? 'text' : 'password';
+        eyeIcon.innerHTML = isPwd
+          ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12A3 3 0 1 1 9.88 9.88"/><line x1="1" y1="1" x2="23" y2="23"/>'
+          : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      });
+
+      // 提交登录：账号 + 密码
+      form.addEventListener('submit', async function (e) {
         e.preventDefault();
         hideError();
+
         const username = usernameInput.value.trim();
         const password = passwordInput.value;
 
-        // 前端校验（与后端规则一致）
-        if (!/^[\w一-龥]{2,20}$/.test(username)) {
-          showError('用户名需为 2-20 位字母、数字、下划线或中文');
-          return;
-        }
-        if (password.length < 6 || password.length > 64) {
-          showError('密码长度需为 6-64 位');
-          return;
-        }
+        if (!username) { showError('请输入账号'); usernameInput.focus(); return; }
+        if (!password) { showError('请输入密码'); passwordInput.focus(); return; }
+
+        const body = { username, password };
 
         submitBtn.disabled = true;
-        submitBtn.textContent = isRegister ? '注册中…' : '登录中…';
+        submitBtn.textContent = '登录中…';
         try {
-          if (isRegister) {
-            const confirmPwd = document.getElementById('confirmPwd').value;
-            if (password !== confirmPwd) {
-              showError('两次输入的密码不一致');
-              return;
-            }
-            // 注册成功后自动登录，直接进入主界面
-            const reg = await postJson('/api/auth/register', { username, password });
-            if (!reg) return;
-            const login = await postJson('/api/auth/login', { username, password });
-            if (!login) {
-              showError('注册成功，但自动登录失败，请手动登录。');
-              switchTab(false);
-              return;
-            }
-            localStorage.setItem(TOKEN_KEY, login.token);
-            localStorage.setItem(USER_KEY, login.username);
-            window.location.replace('index.html');
-          } else {
-            const data = await postJson('/api/auth/login', { username, password });
-            if (!data) return;
-            localStorage.setItem(TOKEN_KEY, data.token);
-            localStorage.setItem(USER_KEY, data.username);
-            window.location.replace('index.html');
-          }
+          const data = await postJson('/api/auth/login', body);
+          if (!data) return;
+          localStorage.setItem(TOKEN_KEY, data.token);
+          localStorage.setItem(USER_KEY, data.username);
+          window.location.replace('index.html');
         } finally {
           submitBtn.disabled = false;
-          submitBtn.textContent = isRegister ? '注 册' : '登 录';
+          submitBtn.textContent = '登 录';
         }
       });
 
-      // ================== 访客进入 ==================
+      // 访客进入
       document.getElementById('guestBtn').addEventListener('click', () => {
         window.location.replace('index.html');
       });
-
-      // 回车提交由表单原生处理（input 在 form 内），无需额外绑定
     })();
   </script>
 </body>

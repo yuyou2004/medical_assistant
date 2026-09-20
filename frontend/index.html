@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>多智能体协同 RAG 医疗咨询助手</title>
+  <title>ClinicMind Health Assistant</title>
+
+  <!-- 字体：Inter（拉丁/数字）+ Noto Sans SC（中文），工整高级的无衬线字族 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- CDN 引入 Tailwind CSS v3（无需本地依赖） -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,9 +17,9 @@
       theme: {
         extend: {
           colors: {
-            primary: '#165DFF',        // 主色：柔和科技蓝
-            'primary-dark': '#0E42D2',
-            'primary-light': '#E8F3FF',// 辅助浅蓝
+            primary: '#5B2C6F',        // 主色：手术服深紫
+            'primary-dark': '#452256',
+            'primary-light': '#F1EAF6',// 辅助浅紫（标签/浅底）
             'text-main': '#1D2129',
             'text-sub': '#6E7681',
             danger: '#F53F3F',
@@ -29,15 +34,18 @@
   <style>
     * { -webkit-tap-highlight-color: transparent; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", "Helvetica Neue", sans-serif;
+      text-rendering: optimizeLegibility;
     }
+    /* 标题与品牌名：轻微收紧字距，更显工整高级 */
+    h1, h2, h3 { letter-spacing: -0.01em; }
     /* 移动端视口高度：100dvh 避免键盘弹出遮挡输入框，100vh 兜底兼容旧浏览器 */
     .app-height { height: 100vh; height: 100dvh; }
 
     /* 滚动条美化 */
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #D3DAE6; border-radius: 9999px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #B8C2D0; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #D8CDE8; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #C2B3DA; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 
     /* AI 打字加载动画（三个点跳动） */
@@ -51,8 +59,8 @@
 
     /* 会诊阶段：执行中呼吸灯 */
     @keyframes stagePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(22, 93, 255, 0.35); }
-      50% { box-shadow: 0 0 0 5px rgba(22, 93, 255, 0.08); }
+      0%, 100% { box-shadow: 0 0 0 0 rgba(91, 44, 111, 0.35); }
+      50% { box-shadow: 0 0 0 5px rgba(91, 44, 111, 0.08); }
     }
     .stage-running { animation: stagePulse 1.2s ease-in-out infinite; }
 
@@ -61,13 +69,6 @@
       display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
     }
 
-    /* 功能菜单弹出动画 */
-    @keyframes menuIn {
-      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .menu-panel { animation: menuIn 0.16s ease-out; }
-
     /* ---------- 图表设计变量（数据可视化规范：浅色主题） ---------- */
     .viz-root {
       color-scheme: light;
@@ -75,7 +76,7 @@
       --text-primary:   #0b0b0b;
       --text-secondary: #52514e;
       --muted:          #898781;   /* 轴/标签 */
-      --series-1:       #2a78d6;   /* 单序列蓝 */
+      --series-1:       #8C5FB3;   /* 单序列紫 */
       --grid-line:      #e1e0d9;   /* 网格线（hairline） */
       --axis:           #c3c2b7;   /* 基线/坐标轴 */
       --ring:           #fcfcfb;   /* 标记点表面描边 */
@@ -83,7 +84,7 @@
   </style>
 </head>
 
-<body class="app-height bg-[#F7F9FC] text-text-main antialiased overflow-hidden flex flex-col">
+<body class="app-height bg-[#F7F6FA] text-text-main antialiased overflow-hidden flex flex-col">
   <!-- ==================== 顶部导航栏 ==================== -->
   <header class="h-16 shrink-0 bg-white/90 backdrop-blur border-b border-gray-100 flex items-center px-3 sm:px-5 gap-2 z-20 relative">
     <!-- 手机端汉堡按钮（展开历史侧边栏） -->
@@ -101,26 +102,19 @@
         </svg>
       </div>
       <div class="leading-tight min-w-0">
-        <p class="font-semibold text-[15px] truncate">多智能体协同 RAG 医疗咨询助手</p>
+        <p class="font-semibold text-[15px] truncate">ClinicMind Health Assistant</p>
         <p class="text-[11px] text-text-sub truncate">AI 健康科普 · 在线咨询</p>
       </div>
     </button>
 
     <div class="flex-1"></div>
 
-    <!-- 右上角：全部功能入口 -->
-    <div class="relative shrink-0">
-      <button id="featureBtn" class="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg text-text-main hover:bg-gray-50 border border-gray-200 transition" title="全部功能">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
-        </svg>
-        <span class="hidden sm:inline font-medium">功能</span>
-      </button>
-      <!-- 功能菜单（全部功能入口，分组展示） -->
-      <div id="featureMenu" class="hidden menu-panel absolute right-0 top-12 w-[320px] sm:w-[400px] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50 max-h-[70vh] overflow-y-auto custom-scroll">
-        <div id="featureMenuBody"></div>
-      </div>
-    </div>
+    <!-- 右上角：全部功能小图标（跳转独立功能页，收纳所有功能模块） -->
+    <a href="features.html" id="featureBtn" class="shrink-0 p-2 rounded-lg text-text-main hover:bg-primary-light transition" title="全部功能" aria-label="全部功能">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+    </a>
 
     <!-- 右上角用户区 -->
     <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -175,7 +169,7 @@
     </aside>
 
     <!-- ② 中间内容主体 -->
-    <main class="flex-1 flex flex-col min-w-0 bg-[#F7F9FC]">
+    <main class="flex-1 flex flex-col min-w-0 bg-[#F7F6FA]">
 
       <!-- 消息滚动区 -->
       <div id="messageArea" class="flex-1 overflow-y-auto custom-scroll px-4 py-6">
@@ -193,7 +187,7 @@
               携带健康档案会诊
             </label>
           </div>
-          <div id="inputBar" class="flex items-end gap-2 bg-[#FAFCFF] rounded-2xl border border-gray-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 p-2 transition">
+          <div id="inputBar" class="flex items-end gap-2 bg-[#FAF9FC] rounded-2xl border border-gray-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 p-2 transition">
             <!-- 多行自适应输入框 -->
             <textarea id="input" rows="1" maxlength="2000" placeholder="请输入您的健康问题，如：最近总是头痛怎么办？"
               class="flex-1 resize-none bg-transparent outline-none text-sm text-text-main placeholder:text-text-sub/70 leading-relaxed py-2 px-2 max-h-[140px]"></textarea>
@@ -206,7 +200,7 @@
           </div>
           <!-- 永久固定安全提示 -->
           <p class="text-center text-[11px] text-text-sub mt-2 leading-relaxed">
-            AI 医疗助手仅提供健康科普参考，不构成医疗诊断，如有身体不适，请及时前往医院就诊。
+            ClinicMind 医疗助手仅提供健康科普参考，不构成医疗诊断，如有身体不适，请及时前往医院就诊。
           </p>
         </div>
       </div>
@@ -225,6 +219,8 @@
 
       const token = localStorage.getItem(TOKEN_KEY);
       const username = localStorage.getItem(USER_KEY);
+      // 欢迎语用户名（登录后由 /api/auth/me 校准；访客为 null → 展示「访客」）
+      let displayName = username;
 
       // 会话按 token 隔离存储（同一账号多设备共享；访客用 guest 隔离）
       const STORE_KEY = 'rag_med_sessions_' + (token || 'guest');
@@ -257,42 +253,7 @@
         },
       };
 
-      // ================== 功能菜单配置（右上角"功能"入口，全部功能分组展示） ==================
-      const FEATURE_GROUPS = [
-        {
-          name: '智能咨询',
-          items: [
-            { mode: MODE.CHAT, label: '智能问答', desc: '大模型快速回答日常健康问题', icon: 'chat' },
-            { mode: MODE.AGENT, label: '多智能体会诊', desc: '6 个 Agent 协同的完整会诊流程', icon: 'users' },
-            { mode: MODE.SEARCH, label: '知识库检索', desc: '教材知识库向量检索，带原文页码', icon: 'search' },
-          ],
-        },
-        {
-          name: '医疗服务',
-          items: [
-            { mode: MODE.APPT, label: '预约挂号', desc: '科室 → 排班 → 挂号单', icon: 'calendar' },
-            { mode: MODE.HOSPITAL, label: '附近医院', desc: '真实定位，按距离排序', icon: 'pin' },
-            { mode: MODE.VISION, label: '图片问诊', desc: '上传皮损照片，视觉模型识别', icon: 'camera' },
-            { mode: MODE.REPORT, label: '体检报告解读', desc: '报告文本/图片逐项解读', icon: 'file' },
-          ],
-        },
-        {
-          name: '健康管理',
-          items: [
-            { mode: MODE.PROFILE, label: '健康档案', desc: '病史/过敏史，会诊时自动携带', icon: 'user' },
-            { mode: MODE.TRENDS, label: '健康数据趋势', desc: '体重/血压记录与趋势图', icon: 'trend' },
-            { mode: MODE.MEDS, label: '用药提醒', desc: '用药计划、打卡与到点通知', icon: 'bell' },
-          ],
-        },
-        {
-          name: '就医指南',
-          items: [
-            { mode: MODE.FAQ, label: '常见问题', desc: '预约/检查/用药/就医流程问答', icon: 'help' },
-          ],
-        },
-      ];
-
-      // 功能图标（统一线性 SVG，与首页卡片共用）
+      // 功能图标（统一线性 SVG，用于首页欢迎区与各服务面板）
       const ICONS = {
         chat: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
         users: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
@@ -371,50 +332,12 @@
       const modeHint = document.getElementById('modeHint');
 
       // ================== 侧边栏（移动端抽屉） ==================
-      function openSidebar() { closeFeatureMenu(); sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+      function openSidebar() { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
       function closeSidebar() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
       document.getElementById('menuBtn').addEventListener('click', openSidebar);
       document.getElementById('closeSidebarBtn').addEventListener('click', closeSidebar);
       overlay.addEventListener('click', closeSidebar);
       document.getElementById('logoBtn').addEventListener('click', () => switchMode(MODE.HOME));
-
-      // ================== 功能菜单（右上角） ==================
-      const featureMenu = document.getElementById('featureMenu');
-      const featureMenuBody = document.getElementById('featureMenuBody');
-      function openFeatureMenu() {
-        featureMenu.classList.remove('hidden');
-      }
-      function closeFeatureMenu() {
-        featureMenu.classList.add('hidden');
-      }
-      function renderFeatureMenu() {
-        featureMenuBody.innerHTML = FEATURE_GROUPS.map(g => `
-          <div class="mb-3 last:mb-0">
-            <p class="text-[11px] font-medium text-text-sub px-2 mb-1.5">${g.name}</p>
-            <div class="grid grid-cols-1 gap-0.5">
-              ${g.items.map(it => `
-                <button data-mode="${it.mode}" class="menu-item w-full text-left flex items-center gap-3 px-2.5 py-2.5 rounded-xl hover:bg-gray-50 transition">
-                  <span class="w-9 h-9 rounded-lg bg-primary-light/60 text-primary flex items-center justify-center shrink-0">${ICONS[it.icon] || ICONS.help}</span>
-                  <span class="min-w-0">
-                    <span class="block text-sm font-medium ${currentMode === it.mode ? 'text-primary' : 'text-text-main'}">${it.label}</span>
-                    <span class="block text-[11px] text-text-sub truncate">${it.desc}</span>
-                  </span>
-                </button>`).join('')}
-            </div>
-          </div>`).join('');
-        featureMenuBody.querySelectorAll('.menu-item').forEach(b => b.addEventListener('click', () => {
-          closeFeatureMenu();
-          switchMode(b.dataset.mode);
-        }));
-      }
-      document.getElementById('featureBtn').addEventListener('click', e => {
-        e.stopPropagation();
-        if (featureMenu.classList.contains('hidden')) { renderFeatureMenu(); openFeatureMenu(); }
-        else closeFeatureMenu();
-      });
-      document.addEventListener('click', e => {
-        if (!featureMenu.contains(e.target) && e.target.id !== 'featureBtn' && !featureMenu.classList.contains('hidden')) closeFeatureMenu();
-      });
 
       // ================== 渲染：侧边栏 ==================
       function renderSidebar() {
@@ -439,43 +362,16 @@
         }).join('');
       }
       // ================== 渲染：首页 ==================
-      let homeStats = null; // 首页统计（知识库片段数等）
-      async function loadHomeStats() {
-        const [kb, faq] = await Promise.all([
-          apiFetch('/api/knowledge/stats'),
-          apiFetch('/api/faq'),
-        ]);
-        homeStats = {
-          chunks: kb.ok && kb.data.chunk_count ? kb.data.chunk_count : null,
-          faqCategories: faq.ok ? (faq.data.categories || []).length : 0,
-          faqQuestions: faq.ok ? (faq.data.questions || []).length : 0,
-        };
-      }
       function homeHeroHtml() {
         const hour = new Date().getHours();
         const greet = hour < 6 ? '夜深了' : hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好';
-        const statCard = (value, label, sub) => `
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 text-center">
-            <p class="text-xl font-semibold tabular-nums">${value}</p>
-            <p class="text-[11px] text-text-sub mt-0.5">${label}${sub ? '<br/>' + sub : ''}</p>
-          </div>`;
-        const statChunks = homeStats && homeStats.chunks != null
-          ? homeStats.chunks.toLocaleString()
-          : '—';
-        const statsHtml = `
-          <div class="grid grid-cols-4 gap-2 sm:gap-3 mt-6">
-            ${statCard('13', '演示医院', '杭州·北京·上海·深圳')}
-            ${statCard(statChunks, '知识库片段', '《内科学》《外科学》')}
-            ${statCard(homeStats ? homeStats.faqQuestions : '—', '常见问答', (homeStats ? homeStats.faqCategories : 0) + ' 个分类')}
-            ${statCard('6+1', '协作 Agent', '问诊·分析·评估')}
-          </div>`;
         const chips = ['最近总是失眠怎么办', '高血压平时要注意什么', '体检报告怎么看', '皮肤上长了红疹'];
         return `
           <div class="text-center pt-8 sm:pt-12 px-2">
             <div class="w-16 h-16 rounded-2xl bg-primary-light flex items-center justify-center text-primary mx-auto mb-5">
               ${ICONS.users.replace('width="18"', 'width="30"').replace('height="18"', 'height="30"')}
             </div>
-            <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">${greet}，有什么可以帮您？</h1>
+            <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">${displayName || '访客'}，${greet}，有什么可以帮您？</h1>
             <p class="text-sm text-text-sub mt-2.5 max-w-md mx-auto leading-relaxed">
               基于多智能体协同与医学教材知识库的 AI 健康咨询：问诊、检索、分析、回答，全流程透明可见。
             </p>
@@ -490,34 +386,14 @@
             <div class="flex flex-wrap justify-center gap-2 mt-4">
               ${chips.map(c => `<button data-chip class="text-xs px-3.5 py-1.5 rounded-full bg-white border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/40 transition">${c}</button>`).join('')}
             </div>
-            ${statsHtml}
           </div>`;
-      }
-      function featureCardHtml(item) {
-        return `
-          <button data-mode="${item.mode}" class="feature-card text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-0.5 transition px-4 py-4 flex items-start gap-3">
-            <span class="w-10 h-10 rounded-xl bg-primary-light/60 text-primary flex items-center justify-center shrink-0">${ICONS[item.icon] || ICONS.help}</span>
-            <span class="min-w-0">
-              <span class="block text-sm font-medium text-text-main">${item.label}</span>
-              <span class="block text-[11px] text-text-sub mt-0.5 leading-relaxed">${item.desc}</span>
-            </span>
-          </button>`;
       }
       function renderHome() {
         messageContainer.innerHTML = `
           <div class="max-w-3xl mx-auto">
             ${homeHeroHtml()}
-            <div class="mt-9">
-              <div class="flex items-center gap-3 mb-3.5">
-                <p class="text-sm font-semibold text-text-main shrink-0">全部功能</p>
-                <div class="flex-1 h-px bg-gray-200"></div>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                ${FEATURE_GROUPS.flatMap(g => g.items).map(featureCardHtml).join('')}
-              </div>
-            </div>
             <p class="text-center text-[11px] text-text-sub mt-9 pb-6 leading-relaxed">
-              AI 医疗助手仅提供健康科普参考，不构成医疗诊断。如有身体不适，请及时前往正规医院就诊。
+              ClinicMind 医疗助手仅提供健康科普参考，不构成医疗诊断。如有身体不适，请及时前往正规医院就诊。
             </p>
           </div>`;
         // 首页快捷提问：跳到智能问答并直接发送
@@ -533,7 +409,6 @@
         homeInput.addEventListener('keydown', e => {
           if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(); }
         });
-        messageContainer.querySelectorAll('.feature-card').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode)));
       }
 
       // ================== 渲染：消息气泡 ==================
@@ -567,7 +442,7 @@
             <div class="max-w-[85%] sm:max-w-[75%]">
               <div class="bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100 px-4 py-3">
                 <div class="flex items-center justify-between mb-1 gap-2">
-                  <p class="text-[11px] font-medium text-primary">AI 医疗助手</p>
+                  <p class="text-[11px] font-medium text-primary">ClinicMind 医疗助手</p>
                   ${badge}
                 </div>
                 <p class="text-sm leading-relaxed whitespace-pre-wrap break-words text-text-main">${renderInlineMd(m.content)}</p>
@@ -653,7 +528,7 @@
                 <path d="M12 5v14M5 12h14"/>
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-text-main">你好，我是 AI 医疗助手</h3>
+            <h3 class="text-lg font-semibold text-text-main">你好，我是 ClinicMind 医疗助手</h3>
             <p class="text-sm text-text-sub mt-2 max-w-sm leading-relaxed">描述您的健康疑问，体验智能问答、多智能体会诊或知识库检索。</p>
             <div class="flex flex-wrap justify-center gap-2 mt-6">
               ${chips.map(c => `<button data-chip class="text-xs sm:text-sm px-4 py-2 rounded-full bg-white border border-gray-200 text-text-sub hover:text-primary hover:border-primary hover:bg-primary-light/40 transition">${c}</button>`).join('')}
@@ -2031,7 +1906,6 @@
       // ================== 模式切换（首页/服务模式隐藏输入区） ==================
       function switchMode(mode) {
         currentMode = mode;
-        closeFeatureMenu();
         closeSidebar();
         const isService = SERVICE_MODES.includes(mode);
         bottomBar.classList.toggle('hidden', isService);
@@ -2068,7 +1942,7 @@
           <div class="max-w-[85%] sm:max-w-[75%] min-w-0 flex-1">
             <div class="bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100 px-4 py-3">
               <div class="flex items-center justify-between mb-1 gap-2">
-                <p class="text-[11px] font-medium text-primary">AI 医疗助手</p>
+                <p class="text-[11px] font-medium text-primary">ClinicMind 医疗助手</p>
                 ${badge}
               </div>
               <p class="stream-content text-sm leading-relaxed whitespace-pre-wrap break-words text-text-main min-h-[1.5rem]"></p>
@@ -2488,6 +2362,7 @@
       userAvatar.style.cursor = 'pointer';
       userNameEl.style.cursor = 'pointer';
       function setUserUI(name) {
+        displayName = name;
         if (name) {
           userAvatar.textContent = name.slice(0, 1).toUpperCase();
           userNameEl.textContent = name;
@@ -2499,13 +2374,18 @@
         }
       }
       async function initAuth() {
-        if (!token) { setUserUI(null); return; }
-        const r = await apiFetch('/api/auth/me');
-        setUserUI(r.ok && r.data.username ? r.data.username : null);
+        if (!token) { setUserUI(null); }
+        else {
+          const r = await apiFetch('/api/auth/me');
+          setUserUI(r.ok && r.data.username ? r.data.username : null);
+        }
+        // 登录态校准后刷新首页欢迎语（访客 → 用户名）
+        if (currentMode === MODE.HOME) renderHome();
       }
-      const goProfileOrLogin = () => { token ? switchMode(MODE.PROFILE) : location.href = 'login.html'; };
-      userAvatar.addEventListener('click', goProfileOrLogin);
-      userNameEl.addEventListener('click', goProfileOrLogin);
+      // 右上角用户区：跳转独立账号页（用户信息 / 资料 / 设置 / 改密）
+      const goUserPage = () => { location.href = 'user.html'; };
+      userAvatar.addEventListener('click', goUserPage);
+      userNameEl.addEventListener('click', goUserPage);
       logoutBtnEl.addEventListener('click', async () => {
         if (token) { try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch (e) {} }
         localStorage.removeItem(TOKEN_KEY);
@@ -2517,9 +2397,11 @@
       loadSessions();
       currentId = sessions.length ? sessions[0].id : null;
       renderSidebar();
-      switchMode(MODE.HOME);
+      // 支持从独立功能页跳转回来：?mode=chat 等直接进入对应功能
+      const urlMode = new URLSearchParams(location.search).get('mode');
+      const startMode = Object.values(MODE).includes(urlMode) ? urlMode : MODE.HOME;
+      switchMode(startMode);
       initAuth();
-      loadHomeStats().then(() => { if (currentMode === MODE.HOME) renderHome(); });
     })();
   </script>
 </body>

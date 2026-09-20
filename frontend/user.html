@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>个人中心 - ClinicMind Health Assistant</title>
+
+  <!-- 字体：Inter（拉丁/数字）+ Noto Sans SC（中文），与登录页一致 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- CDN 引入 Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#5B2C6F',
+            'primary-dark': '#452256',
+            'primary-light': '#F1EAF6',
+            'text-main': '#1D2129',
+            'text-sub': '#6E7681',
+            danger: '#F53F3F'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", "Helvetica Neue", sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+    h1, h2, h3 { letter-spacing: -0.01em; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp .5s ease both; }
+    .field-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      background: #F8F9FB;
+      font-size: 0.875rem;
+      color: #1D2129;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field-input:focus { border-color: #5B2C6F; box-shadow: 0 0 0 4px rgba(91,44,111,0.10); }
+    .field-input::placeholder { color: rgba(110,118,129,0.7); }
+  </style>
+</head>
+
+<body class="min-h-screen bg-[#6F4E9C] text-text-main antialiased overflow-x-hidden">
+  <!-- 背景：淡紫渐变 + 柔和光晕（与登录页一致） -->
+  <div class="fixed inset-0 -z-10 bg-gradient-to-br from-[#8A68B5] via-[#6F4E9C] to-[#5B3D85]"></div>
+  <div class="fixed -z-10 top-[-120px] right-[-80px] w-[340px] h-[340px] rounded-full bg-[#A98CD0] opacity-30 blur-3xl"></div>
+  <div class="fixed -z-10 bottom-[-120px] left-[-80px] w-[320px] h-[320px] rounded-full bg-[#B49BD8] opacity-25 blur-3xl"></div>
+
+  <div class="min-h-screen px-4 py-8">
+    <div class="max-w-xl mx-auto">
+
+      <!-- 返回首页 -->
+      <a href="index.html" class="inline-flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition mb-5">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>
+        </svg>
+        返回首页
+      </a>
+
+      <!-- ==================== 未登录状态 ==================== -->
+      <div id="guestCard" class="hidden animate-fade-up">
+        <div class="bg-white rounded-2xl shadow-[0_18px_50px_-12px_rgba(91,44,111,0.25)] p-8 sm:p-10 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-primary-light text-primary flex items-center justify-center mx-auto mb-5">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <h1 class="text-xl font-semibold tracking-tight">您还未登录</h1>
+          <p class="text-sm text-text-sub mt-2 leading-relaxed">登录后可查看个人信息、编辑资料、修改密码等账号功能。</p>
+          <div class="flex flex-col sm:flex-row gap-3 mt-7">
+            <a href="login.html" class="flex-1 py-3 rounded-xl bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-medium text-[15px] shadow-lg shadow-primary/30 transition">登 录</a>
+            <a href="register.html" class="flex-1 py-3 rounded-xl border border-gray-200 text-text-main hover:border-primary hover:text-primary hover:bg-primary-light/30 text-[15px] font-medium transition">注 册</a>
+          </div>
+          <a href="index.html" class="inline-block mt-4 text-sm text-text-sub hover:text-primary transition">暂不登录，先逛逛 →</a>
+        </div>
+      </div>
+
+      <!-- ==================== 已登录状态 ==================== -->
+      <div id="loggedInCard" class="hidden animate-fade-up space-y-5">
+
+        <!-- 用户信息展示 -->
+        <div class="bg-white rounded-2xl shadow-[0_18px_50px_-12px_rgba(91,44,111,0.25)] p-6 sm:p-7">
+          <div class="flex items-center gap-4">
+            <div id="avatar" class="w-16 h-16 rounded-2xl bg-primary text-white text-2xl font-semibold flex items-center justify-center shrink-0">医</div>
+            <div class="min-w-0 flex-1">
+              <h1 class="text-xl font-semibold tracking-tight truncate" id="infoRealName">未设置</h1>
+              <p class="text-sm text-text-sub mt-0.5">账号：<span id="infoUsername">—</span></p>
+              <p class="text-xs text-text-sub mt-1">注册于 <span id="infoCreatedAt">—</span></p>
+            </div>
+            <button id="logoutBtn" class="shrink-0 text-sm px-3 py-2 rounded-lg text-text-sub hover:text-danger hover:bg-red-50 transition flex items-center gap-1.5" title="退出登录">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>
+              </svg>
+              退出
+            </button>
+          </div>
+        </div>
+
+        <!-- 个人资料编辑 -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 sm:p-7">
+          <h2 class="font-semibold text-[15px] mb-1">个人资料编辑</h2>
+          <p class="text-xs text-text-sub mb-5">完善姓名、性别、年龄，便于提供更贴合的咨询服务。</p>
+          <form id="profileForm" class="space-y-4" novalidate>
+            <div>
+              <label for="pName" class="block text-sm font-medium mb-2 text-text-main">姓名</label>
+              <input id="pName" type="text" maxlength="30" class="field-input" placeholder="如：张三" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="pGender" class="block text-sm font-medium mb-2 text-text-main">性别</label>
+                <select id="pGender" class="field-input">
+                  <option value="">未设置</option>
+                  <option value="男">男</option>
+                  <option value="女">女</option>
+                </select>
+              </div>
+              <div>
+                <label for="pAge" class="block text-sm font-medium mb-2 text-text-main">年龄</label>
+                <input id="pAge" type="number" min="0" max="150" class="field-input" placeholder="如：25" />
+              </div>
+            </div>
+            <p id="profileMsg" class="hidden text-xs mt-2 text-center"></p>
+            <button type="submit" class="w-full py-3 rounded-xl bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-medium text-[15px] shadow-lg shadow-primary/30 transition">
+              保存资料
+            </button>
+          </form>
+        </div>
+
+        <!-- 账号设置 -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 sm:p-7">
+          <h2 class="font-semibold text-[15px] mb-1">账号设置</h2>
+          <p class="text-xs text-text-sub mb-5">账号名用于登录，暂不支持修改。</p>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2 text-text-main">账号</label>
+              <input id="acctUsername" type="text" class="field-input" disabled />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2 text-text-main">注册时间</label>
+              <input id="acctCreatedAt" type="text" class="field-input" disabled />
+            </div>
+          </div>
+        </div>
+
+        <!-- 密码修改 -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 sm:p-7">
+          <h2 class="font-semibold text-[15px] mb-1">密码修改</h2>
+          <p class="text-xs text-text-sub mb-5">为保障账号安全，修改密码前请先输入当前密码。</p>
+          <form id="pwdForm" class="space-y-4" novalidate>
+            <div>
+              <label for="oldPwd" class="block text-sm font-medium mb-2 text-text-main">当前密码</label>
+              <input id="oldPwd" type="password" autocomplete="current-password" class="field-input" placeholder="请输入当前密码" />
+            </div>
+            <div>
+              <label for="newPwd" class="block text-sm font-medium mb-2 text-text-main">新密码</label>
+              <input id="newPwd" type="password" autocomplete="new-password" class="field-input" placeholder="至少 6 位" />
+            </div>
+            <div>
+              <label for="confirmPwd" class="block text-sm font-medium mb-2 text-text-main">确认新密码</label>
+              <input id="confirmPwd" type="password" autocomplete="new-password" class="field-input" placeholder="再次输入新密码" />
+            </div>
+            <p id="pwdMsg" class="hidden text-xs mt-2 text-center"></p>
+            <button type="submit" class="w-full py-3 rounded-xl bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-medium text-[15px] shadow-lg shadow-primary/30 transition">
+              修改密码
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- 底部安全提示 -->
+      <p class="text-center text-xs text-white/70 mt-6 px-4 leading-relaxed">
+        ⚠️ 本产品仅供健康科普参考，不构成医疗诊断，如有身体不适请及时线下就医
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const TOKEN_KEY = 'rag_med_token';
+      const USER_KEY  = 'rag_med_username';
+      const API_BASE  = '';
+
+      const token = localStorage.getItem(TOKEN_KEY);
+      const guestCard = document.getElementById('guestCard');
+      const loggedInCard = document.getElementById('loggedInCard');
+
+      // 请求封装：统一处理网络异常 / 非 JSON 响应 / 401 登录态失效
+      async function apiFetch(path, options) {
+        const opts = options || {};
+        const headers = Object.assign({}, opts.headers || {});
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        if (opts.body && !(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+        let resp;
+        try {
+          resp = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+        } catch (e) {
+          return { ok: false, status: 0, data: { detail: '无法连接服务器，请确认后端服务已启动' } };
+        }
+        let data = null;
+        try { data = await resp.json(); } catch (e) { data = {}; }
+        return { ok: resp.ok, status: resp.status, data };
+      }
+
+      function showMsg(el, text, ok) {
+        el.textContent = text;
+        el.className = 'text-xs mt-2 text-center ' + (ok ? 'text-primary' : 'text-danger');
+      }
+
+      // 未登录：直接展示访客提示
+      if (!token) {
+        guestCard.classList.remove('hidden');
+        return;
+      }
+
+      loggedInCard.classList.remove('hidden');
+      let loadedProfile = {};
+
+      async function init() {
+        const [me, profile] = await Promise.all([
+          apiFetch('/api/auth/me'),
+          apiFetch('/api/profile'),
+        ]);
+
+        // 令牌失效：清除本地登录态并回到登录页
+        if (me.status === 401) {
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          location.href = 'login.html';
+          return;
+        }
+
+        const u = me.data || {};
+        const p = profile.ok ? profile.data : {};
+        loadedProfile = p;
+
+        // 用户信息展示
+        document.getElementById('avatar').textContent = (u.username || '医').slice(0, 1).toUpperCase();
+        document.getElementById('infoUsername').textContent = u.username || '—';
+        document.getElementById('infoRealName').textContent = u.real_name || '未设置';
+        document.getElementById('infoCreatedAt').textContent = u.created_at || '—';
+
+        // 账号设置（只读）
+        document.getElementById('acctUsername').value = u.username || '';
+        document.getElementById('acctCreatedAt').value = u.created_at || '—';
+
+        // 资料编辑预填
+        document.getElementById('pName').value = p.real_name || '';
+        document.getElementById('pGender').value = p.gender || '';
+        document.getElementById('pAge').value = p.age || '';
+      }
+
+      // 保存资料：合并健康档案完整数据后回写，避免覆盖病史/过敏史等字段
+      document.getElementById('profileForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const el = document.getElementById('profileMsg');
+        const ageRaw = parseInt(document.getElementById('pAge').value || '0', 10);
+        const body = Object.assign({}, loadedProfile, {
+          real_name: document.getElementById('pName').value.trim(),
+          gender: document.getElementById('pGender').value,
+          age: isNaN(ageRaw) ? 0 : ageRaw,
+        });
+        const r = await apiFetch('/api/profile', { method: 'PUT', body: JSON.stringify(body) });
+        if (r.ok) {
+          showMsg(el, '资料已保存', true);
+          document.getElementById('infoRealName').textContent = body.real_name || '未设置';
+        } else {
+          showMsg(el, (r.data && r.data.detail) || '保存失败，请稍后重试', false);
+        }
+      });
+
+      // 修改密码
+      document.getElementById('pwdForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const el = document.getElementById('pwdMsg');
+        const oldPwd = document.getElementById('oldPwd').value;
+        const newPwd = document.getElementById('newPwd').value;
+        const confirmPwd = document.getElementById('confirmPwd').value;
+        if (!oldPwd) { showMsg(el, '请输入当前密码', false); return; }
+        if (newPwd.length < 6) { showMsg(el, '新密码至少 6 位', false); return; }
+        if (newPwd !== confirmPwd) { showMsg(el, '两次输入的新密码不一致', false); return; }
+        const r = await apiFetch('/api/auth/change-password', {
+          method: 'POST',
+          body: JSON.stringify({ old_password: oldPwd, new_password: newPwd }),
+        });
+        if (r.ok) {
+          showMsg(el, '密码修改成功', true);
+          document.getElementById('pwdForm').reset();
+        } else {
+          showMsg(el, (r.data && r.data.detail) || '修改失败，请稍后重试', false);
+        }
+      });
+
+      // 退出登录
+      document.getElementById('logoutBtn').addEventListener('click', async function () {
+        if (token) { try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch (e) {} }
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        location.href = 'login.html';
+      });
+
+      init();
+    })();
+  </script>
+</body>
+</html>

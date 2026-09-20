@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>注册 - ClinicMind Health Assistant</title>
+
+  <!-- 字体：Inter（拉丁/数字）+ Noto Sans SC（中文） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- CDN 引入 Tailwind CSS v3（无需本地依赖） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#5B2C6F',        // 主色：手术服深紫
+            'primary-dark': '#452256', // 主色加深（hover）
+            'primary-light': '#F1EAF6',// 辅助浅紫（标签/浅底）
+            'text-main': '#1D2129',    // 文字主色
+            'text-sub': '#8A93A6',     // 次要文字
+            danger: '#F53F3F'          // 危险提示色
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", "Helvetica Neue", sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+    h1, h2, h3 { letter-spacing: -0.01em; }
+    /* 内容区入场动画 */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp .5s ease both; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-[#F7F6FA] text-text-main antialiased overflow-x-hidden flex flex-col">
+
+  <!-- ==================== 顶部插画区：医院建筑（淡紫） ==================== -->
+  <section class="relative bg-gradient-to-b from-[#EFE8F7] to-[#F7F4FB] pt-10 pb-0 overflow-hidden">
+    <!-- 柔和光晕点缀 -->
+    <div class="absolute -top-16 right-1/2 translate-x-1/2 w-72 h-72 rounded-full bg-[#E6DCF3] opacity-60 blur-2xl"></div>
+
+    <div class="relative max-w-md mx-auto px-6">
+      <!-- 医院建筑插画 -->
+      <svg viewBox="0 0 420 200" fill="none" xmlns="http://www.w3.org/2000/svg"
+           class="w-full h-auto max-w-[300px] mx-auto block drop-shadow-sm" role="img" aria-label="医院建筑插画">
+        <!-- 背景光晕 -->
+        <circle cx="210" cy="100" r="88" fill="#EFE6F8" />
+
+        <!-- 装饰：漂浮的「+」号 -->
+        <path d="M54 56 v16 M46 64 h16" stroke="#CFBDE6" stroke-width="3" stroke-linecap="round" />
+        <path d="M362 88 v16 M354 96 h16" stroke="#DCCEEF" stroke-width="3" stroke-linecap="round" />
+
+        <!-- 左侧翼楼 -->
+        <rect x="76" y="112" width="84" height="72" rx="8" fill="#EDE3F6" stroke="#C7B3E2" stroke-width="2" />
+        <rect x="109" y="126" width="18" height="14" rx="3" fill="#C9B6E0" />
+        <rect x="109" y="150" width="18" height="14" rx="3" fill="#C9B6E0" />
+
+        <!-- 右侧翼楼 -->
+        <rect x="260" y="112" width="84" height="72" rx="8" fill="#EDE3F6" stroke="#C7B3E2" stroke-width="2" />
+        <rect x="293" y="126" width="18" height="14" rx="3" fill="#C9B6E0" />
+        <rect x="293" y="150" width="18" height="14" rx="3" fill="#C9B6E0" />
+
+        <!-- 主楼 -->
+        <rect x="160" y="66" width="100" height="118" rx="8" fill="#F4EDFA" stroke="#C7B3E2" stroke-width="2" />
+
+        <!-- 主楼顶部医疗十字 -->
+        <rect x="203" y="24" width="14" height="42" rx="3" fill="#8C5FB3" />
+        <rect x="189" y="38" width="42" height="14" rx="3" fill="#8C5FB3" />
+
+        <!-- 主楼窗户 -->
+        <rect x="172" y="86"  width="18" height="14" rx="3" fill="#C9B6E0" />
+        <rect x="230" y="86"  width="18" height="14" rx="3" fill="#C9B6E0" />
+        <rect x="172" y="110" width="18" height="14" rx="3" fill="#C9B6E0" />
+        <rect x="230" y="110" width="18" height="14" rx="3" fill="#C9B6E0" />
+        <rect x="172" y="134" width="18" height="14" rx="3" fill="#C9B6E0" />
+        <rect x="230" y="134" width="18" height="14" rx="3" fill="#C9B6E0" />
+
+        <!-- 主楼大门 -->
+        <rect x="196" y="158" width="28" height="26" rx="5" fill="#B79AD4" />
+        <rect x="208" y="166" width="4"  height="10" rx="1" fill="#F4EDFA" />
+        <rect x="205" y="169" width="10" height="4"  rx="1" fill="#F4EDFA" />
+
+        <!-- 地面投影 -->
+        <ellipse cx="210" cy="188" rx="150" ry="6" fill="#E3D6F1" />
+      </svg>
+    </div>
+  </section>
+
+  <!-- ==================== 细长条色块：插画与内容区的分割 ==================== -->
+  <div class="h-1.5 w-full bg-gradient-to-r from-[#C7B3E2] via-[#8C5FB3] to-[#C7B3E2]"></div>
+
+  <!-- ==================== 下方内容区 ==================== -->
+  <main class="flex-1 flex items-start justify-center px-6 py-10">
+    <div class="w-full max-w-sm animate-fade-up">
+
+      <!-- 标题区 -->
+      <div class="text-center">
+        <h1 class="text-4xl font-bold tracking-tight text-text-main leading-none">ClinicMind</h1>
+        <p class="text-base font-semibold tracking-[0.18em] text-primary/80 leading-none mt-2">Health Assistant</p>
+
+        <!-- 功能标签 -->
+        <div class="flex justify-center gap-2 mt-6">
+          <span class="text-xs px-3.5 py-1.5 rounded-full bg-primary-light text-primary font-medium">预约挂号</span>
+          <span class="text-xs px-3.5 py-1.5 rounded-full bg-primary-light text-primary font-medium">报告查询</span>
+          <span class="text-xs px-3.5 py-1.5 rounded-full bg-primary-light text-primary font-medium">健康提醒</span>
+        </div>
+      </div>
+
+      <!-- 注册表单 -->
+      <form id="registerForm" class="mt-8 space-y-4" novalidate>
+        <!-- 账号 -->
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-sub">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </span>
+          <input id="username" type="text" maxlength="20" autocomplete="username"
+            class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-[#E6E2EF] bg-white text-sm text-text-main placeholder:text-text-sub/70 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+            placeholder="请输入账号" />
+        </div>
+
+        <!-- 密码 -->
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-sub">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+          <input id="password" type="password" maxlength="64" autocomplete="new-password"
+            class="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-[#E6E2EF] bg-white text-sm text-text-main placeholder:text-text-sub/70 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+            placeholder="请设置密码（至少 6 位）" />
+          <!-- 显示 / 隐藏密码 -->
+          <button type="button" id="togglePwd" class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-text-sub hover:text-primary transition" aria-label="显示/隐藏密码">
+            <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 错误提示 -->
+        <p id="errorMsg" class="hidden text-xs text-danger bg-red-50 rounded-xl px-3.5 py-2.5 leading-relaxed"></p>
+
+        <!-- 一键注册按钮 -->
+        <button type="submit" id="submitBtn"
+          class="w-full py-3.5 rounded-full bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-semibold text-[15px] shadow-lg shadow-primary/30 transition disabled:opacity-60 disabled:cursor-not-allowed">
+          一键注册
+        </button>
+      </form>
+
+      <!-- 已有账号，去登录 -->
+      <p class="text-center text-sm text-text-sub mt-6">
+        已有账号？
+        <a href="login.html" class="text-primary font-medium hover:underline underline-offset-4">去登录</a>
+      </p>
+    </div>
+  </main>
+
+  <!-- ==================== 底部安全提示 ==================== -->
+  <footer class="pb-8 px-6">
+    <p class="flex items-center justify-center gap-1.5 text-center text-xs text-text-sub/90 leading-relaxed">
+      <svg class="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span>您的数据将受到严格加密保护</span>
+    </p>
+  </footer>
+
+  <script>
+    (function () {
+      // ================== 注册鉴权（对接后端 /api/auth/register + /api/auth/login） ==================
+      const TOKEN_KEY = 'rag_med_token';     // localStorage 中保存 token 的 key
+      const USER_KEY  = 'rag_med_username';  // localStorage 中保存账号的 key
+      const API_BASE  = '';                  // 同源部署时留空；前后端分离部署时填后端地址
+
+      // 已登录则直接跳转聊天页，避免重复注册
+      if (localStorage.getItem(TOKEN_KEY)) {
+        window.location.replace('index.html');
+        return;
+      }
+
+      const form = document.getElementById('registerForm');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const errorMsg = document.getElementById('errorMsg');
+      const submitBtn = document.getElementById('submitBtn');
+
+      function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.remove('hidden');
+      }
+      function hideError() { errorMsg.classList.add('hidden'); }
+
+      // 请求封装：统一处理网络异常 / 后端未启动 / 非 JSON 响应 / 业务错误
+      async function postJson(path, body) {
+        let resp;
+        try {
+          resp = await fetch(API_BASE + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+        } catch (e) {
+          showError('无法连接服务器，请确认后端服务已启动后重试。');
+          return null;
+        }
+        let data = null;
+        try { data = await resp.json(); } catch (e) { /* 非 JSON 响应 */ }
+        if (!resp.ok) {
+          if (resp.status === 503) {
+            showError((data && data.detail) || '用户系统未启用：请启动 MySQL 并设置 MYSQL_ENABLED=1 后重启服务');
+            return null;
+          }
+          showError((data && data.detail) || ('请求失败（HTTP ' + resp.status + '）'));
+          return null;
+        }
+        return data;
+      }
+
+      // 密码显示 / 隐藏
+      const eyeIcon = document.getElementById('eyeIcon');
+      document.getElementById('togglePwd').addEventListener('click', () => {
+        const isPwd = passwordInput.type === 'password';
+        passwordInput.type = isPwd ? 'text' : 'password';
+        eyeIcon.innerHTML = isPwd
+          ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12A3 3 0 1 1 9.88 9.88"/><line x1="1" y1="1" x2="23" y2="23"/>'
+          : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      });
+
+      // 提交注册：账号注册 → 自动登录拿 token → 进入聊天页
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideError();
+
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+
+        // 前端校验（与后端规则一致）
+        if (!/^[\w一-龥]+$/.test(username) || username.length < 2 || username.length > 20) {
+          showError('账号需为 2-20 位字母、数字、下划线或中文');
+          usernameInput.focus();
+          return;
+        }
+        if (password.length < 6) {
+          showError('密码至少 6 位');
+          passwordInput.focus();
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = '注册中…';
+        try {
+          // 1) 注册（后端 /api/auth/register 支持 username + password）
+          const reg = await postJson('/api/auth/register', { username, password });
+          if (!reg) return;
+
+          // 2) 注册成功后自动登录，拿到访问令牌
+          const login = await postJson('/api/auth/login', { username, password });
+          if (!login) {
+            showError('注册成功，但自动登录失败，请前往登录页手动登录。');
+            return;
+          }
+          localStorage.setItem(TOKEN_KEY, login.token);
+          localStorage.setItem(USER_KEY, login.username);
+          window.location.replace('index.html');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '一键注册';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

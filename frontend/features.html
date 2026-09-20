@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>全部功能 - ClinicMind Health Assistant</title>
+
+  <!-- 字体：Inter（拉丁/数字）+ Noto Sans SC（中文），与首页保持一致 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- CDN 引入 Tailwind CSS v3（无需本地依赖） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#5B2C6F',        // 主色：手术服深紫
+            'primary-dark': '#452256',
+            'primary-light': '#F1EAF6',// 辅助浅紫（标签/浅底）
+            'text-main': '#1D2129',
+            'text-sub': '#6E7681',
+            danger: '#F53F3F',
+            success: '#00B42A',
+            warning: '#FF7D00'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", "Helvetica Neue", sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+    h1, h2, h3 { letter-spacing: -0.01em; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #D8CDE8; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #C2B3DA; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-[#F7F6FA] text-text-main antialiased">
+
+  <!-- ==================== 顶部导航栏 ==================== -->
+  <header class="h-16 shrink-0 bg-white/90 backdrop-blur border-b border-gray-100 flex items-center px-3 sm:px-5 gap-2 z-20 sticky top-0">
+    <!-- 返回首页 -->
+    <a href="index.html" class="shrink-0 p-2 rounded-lg text-text-main hover:bg-primary-light transition" title="返回首页" aria-label="返回首页">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>
+      </svg>
+    </a>
+
+    <!-- Logo + 应用名 -->
+    <div class="flex items-center gap-2.5 min-w-0 text-left">
+      <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white shadow-md shadow-primary/25 shrink-0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      </div>
+      <div class="leading-tight min-w-0">
+        <p class="font-semibold text-[15px] truncate">ClinicMind Health Assistant</p>
+        <p class="text-[11px] text-text-sub truncate">全部功能</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 主体：全部功能聚合页 ==================== -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">全部功能</h1>
+      <p class="text-sm text-text-sub mt-2.5 max-w-md mx-auto leading-relaxed">
+        所有健康服务聚合于此，点击卡片进入对应功能。
+      </p>
+    </div>
+
+    <div id="featureGroups"></div>
+
+    <p class="text-center text-[11px] text-text-sub mt-6 pb-8 leading-relaxed">
+      ClinicMind 医疗助手仅提供健康科普参考，不构成医疗诊断。如有身体不适，请及时前往正规医院就诊。
+    </p>
+  </main>
+
+  <script>
+    (function () {
+      // 功能分组配置（与首页保持一致，聚合展示全部功能模块）
+      const FEATURE_GROUPS = [
+        {
+          name: '智能咨询',
+          items: [
+            { mode: 'chat', label: '智能问答', desc: '大模型快速回答日常健康问题', icon: 'chat' },
+            { mode: 'agent', label: '多智能体会诊', desc: '6 个 Agent 协同的完整会诊流程', icon: 'users' },
+            { mode: 'search', label: '知识库检索', desc: '教材知识库向量检索，带原文页码', icon: 'search' },
+          ],
+        },
+        {
+          name: '医疗服务',
+          items: [
+            { mode: 'appt', label: '预约挂号', desc: '科室 → 排班 → 挂号单', icon: 'calendar' },
+            { mode: 'hospital', label: '附近医院', desc: '真实定位，按距离排序', icon: 'pin' },
+            { mode: 'vision', label: '图片问诊', desc: '上传皮损照片，视觉模型识别', icon: 'camera' },
+            { mode: 'report', label: '体检报告解读', desc: '报告文本/图片逐项解读', icon: 'file' },
+          ],
+        },
+        {
+          name: '健康管理',
+          items: [
+            { mode: 'profile', label: '健康档案', desc: '病史/过敏史，会诊时自动携带', icon: 'user' },
+            { mode: 'trends', label: '健康数据趋势', desc: '体重/血压记录与趋势图', icon: 'trend' },
+            { mode: 'meds', label: '用药提醒', desc: '用药计划、打卡与到点通知', icon: 'bell' },
+          ],
+        },
+        {
+          name: '就医指南',
+          items: [
+            { mode: 'faq', label: '常见问题', desc: '预约/检查/用药/就医流程问答', icon: 'help' },
+          ],
+        },
+      ];
+
+      // 功能图标（统一线性 SVG，与首页共用）
+      const ICONS = {
+        chat: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        users: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+        search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>',
+        calendar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>',
+        pin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        camera: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+        file: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+        user: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+        trend: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m23 6-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>',
+        bell: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+        help: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+      };
+
+      function iconHtml(name) {
+        const svg = ICONS[name] || ICONS.help;
+        return svg.replace('width="18"', 'width="22"').replace('height="18"', 'height="22"');
+      }
+
+      function cardHtml(item) {
+        return `
+          <a href="index.html?mode=${item.mode}" class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-0.5 transition p-5 flex items-start gap-3.5">
+            <span class="w-11 h-11 rounded-xl bg-primary-light/60 text-primary flex items-center justify-center shrink-0">${iconHtml(item.icon)}</span>
+            <span class="min-w-0">
+              <span class="block text-sm font-semibold text-text-main group-hover:text-primary transition">${item.label}</span>
+              <span class="block text-[12px] text-text-sub mt-1 leading-relaxed">${item.desc}</span>
+            </span>
+          </a>`;
+      }
+
+      document.getElementById('featureGroups').innerHTML = FEATURE_GROUPS.map(g => `
+        <section class="mb-8">
+          <div class="flex items-center gap-3 mb-3.5">
+            <p class="text-sm font-semibold text-text-main shrink-0">${g.name}</p>
+            <div class="flex-1 h-px bg-gray-200"></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${g.items.map(cardHtml).join('')}
+          </div>
+        </section>`).join('');
+    })();
+  </script>
+</body>
+</html>
