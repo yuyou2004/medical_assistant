@@ -4,9 +4,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.agent import setup_default_agents
-from app.api import agent, auth, chat, consultation, knowledge
+from app.api import agent, appointment, auth, chat, consultation, hospital, knowledge, profile, vision
 from app.config import settings
 from app.dao import db
 
@@ -46,11 +47,27 @@ app.include_router(auth.router)
 app.include_router(agent.router)
 app.include_router(consultation.router)
 app.include_router(knowledge.router)
+app.include_router(hospital.router)
+app.include_router(appointment.router)
+app.include_router(profile.router)
+app.include_router(vision.router)
 
 
-@app.get("/")
-def root():
-    return {"message": "AI 医疗咨询助手服务已启动"}
+@app.get("/api/health")
+def health():
+    """健康检查：前端首屏用于探测后端是否在线"""
+    return {
+        "status": "ok",
+        "llm_configured": settings.LLM_CONFIGURED,
+        "db_enabled": settings.DB_ENABLED,
+    }
+
+
+# 前端静态托管：注册在最后，保证 /api/* 路由优先；GET / 由静态托管返回 index.html
+# 说明：同源部署无跨域问题；若后端改动，浏览器硬刷新（Ctrl+F5）即可拿到新页面
+_frontend_dir = settings.BASE_DIR / "frontend"
+if _frontend_dir.is_dir():
+    app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="frontend")
 
 
 if __name__ == "__main__":
