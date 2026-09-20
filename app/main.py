@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.agent import setup_default_agents
@@ -81,10 +82,15 @@ def health():
     }
 
 
-# 前端静态托管：注册在最后，保证 /api/* 路由优先；GET / 由静态托管返回 index.html
+# 前端静态托管：注册在最后，保证 /api/* 路由优先
 # 说明：同源部署无跨域问题；若后端改动，浏览器硬刷新（Ctrl+F5）即可拿到新页面
 _frontend_dir = settings.BASE_DIR / "frontend"
 if _frontend_dir.is_dir():
+    # 根路径默认打开产品介绍主页（落地页，无聊天输入框）；聊天页在 index.html，由主页「进入聊天」按钮跳转
+    @app.get("/", include_in_schema=False)
+    def landing():
+        return FileResponse(_frontend_dir / "home.html")
+
     app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="frontend")
 
 

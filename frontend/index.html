@@ -337,7 +337,7 @@
       document.getElementById('menuBtn').addEventListener('click', openSidebar);
       document.getElementById('closeSidebarBtn').addEventListener('click', closeSidebar);
       overlay.addEventListener('click', closeSidebar);
-      document.getElementById('logoBtn').addEventListener('click', () => switchMode(MODE.HOME));
+      document.getElementById('logoBtn').addEventListener('click', () => { location.href = 'home.html'; });
 
       // ================== 渲染：侧边栏 ==================
       function renderSidebar() {
