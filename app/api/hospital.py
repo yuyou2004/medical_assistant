@@ -11,15 +11,22 @@ def list_hospitals(
     city: str | None = Query(default=None, description="城市：杭州/北京/上海/深圳"),
     district: str | None = Query(default=None, description="行政区"),
     department: str | None = Query(default=None, description="科室筛选"),
+    lat: float | None = Query(default=None, ge=-90, le=90, description="用户定位纬度（提供后按真实距离排序）"),
+    lng: float | None = Query(default=None, ge=-180, le=180, description="用户定位经度"),
 ):
-    """查询医院列表（内置演示数据），按模拟距离升序"""
+    """查询医院列表（内置演示数据）。
+
+    提供 lat/lng（浏览器定位）时按 haversine 真实距离升序（离我最近）；
+    否则按市中心参考距离升序。返回 located 标记当前是否使用了真实定位。
+    """
+    located = lat is not None and lng is not None
     try:
-        hospitals = hospital_dao.list_hospitals(city, district, department)
+        hospitals = hospital_dao.list_hospitals(city, district, department, lat, lng)
     except Exception:
         # MySQL 未启用时医院数据不存在，直接返回空（前端提示启用数据库）
-        return {"hospitals": [], "demo": True}
+        return {"hospitals": [], "located": False, "demo": True}
     districts = sorted({h["district"] for h in hospitals}) if hospitals else []
-    return {"hospitals": hospitals, "districts": districts, "demo": True}
+    return {"hospitals": hospitals, "districts": districts, "located": located, "demo": True}
 
 
 @router.get("/schedule")

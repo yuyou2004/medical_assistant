@@ -3,7 +3,6 @@ import logging
 
 from app.agent.base import BaseAgent
 from app.config import settings
-from app.service import rag_service
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +21,8 @@ class RagAgent(BaseAgent):
 
     def search(self, query: str, top_k: int | None = None, top_n: int | None = None) -> list[dict]:
         """向量召回 + 重排精筛，返回 [{content, score, source, page}]"""
+        from app.service import rag_service  # 懒加载：向量库依赖（chromadb 等）首次检索时才导入
+
         try:
             return rag_service.search_with_rerank(
                 query,

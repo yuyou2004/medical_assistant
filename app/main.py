@@ -7,7 +7,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.agent import setup_default_agents
-from app.api import agent, appointment, auth, chat, consultation, hospital, knowledge, profile, vision
+from app.api import (
+    agent,
+    appointment,
+    auth,
+    chat,
+    consultation,
+    faq,
+    health,
+    hospital,
+    knowledge,
+    medication,
+    profile,
+    report,
+    vision,
+)
 from app.config import settings
 from app.dao import db
 
@@ -51,6 +65,10 @@ app.include_router(hospital.router)
 app.include_router(appointment.router)
 app.include_router(profile.router)
 app.include_router(vision.router)
+app.include_router(health.router)
+app.include_router(medication.router)
+app.include_router(faq.router)
+app.include_router(report.router)
 
 
 @app.get("/api/health")

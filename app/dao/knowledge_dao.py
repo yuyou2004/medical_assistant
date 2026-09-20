@@ -6,16 +6,16 @@
 import logging
 from pathlib import Path
 
-import chromadb
-
 from app.config import settings
-from app.rag.retriever import COLLECTION_NAME
 
 logger = logging.getLogger(__name__)
 
 
 def get_chunk_count() -> int:
     """向量库 chunk 总数；库不可用时返回 0"""
+    import chromadb  # 懒加载：chromadb 依赖较重，只在统计向量库时导入
+    from app.rag.retriever import COLLECTION_NAME
+
     try:
         client = chromadb.PersistentClient(path=settings.VECTOR_DB_DIR)
         return client.get_collection(COLLECTION_NAME).count()

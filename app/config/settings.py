@@ -50,6 +50,8 @@ VISION_ENABLED = bool(VISION_API_KEY) and VISION_API_KEY != "sk-your-api-key-her
 MAX_IMAGE_SIZE_MB = 8  # 图片上传大小上限（MB）
 
 # ---------- RAG 知识库配置 ----------
+# ChromaDB 关闭匿名遥测：少一次外发探测，启动更快（必须在 chromadb 导入前设置）
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 RAG_PDF_DIR = os.getenv("RAG_PDF_DIR", str(BASE_DIR / "app" / "rag"))  # 待建库 PDF 所在目录
 VECTOR_DB_DIR = os.getenv("VECTOR_DB_DIR", str(BASE_DIR / "data" / "vector_db"))  # 向量库持久化目录
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "400"))

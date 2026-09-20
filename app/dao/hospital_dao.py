@@ -2,9 +2,12 @@
 
 说明：医院为内置演示数据（无真实医院系统对接）；排班表按日期+医生+时段
 确定性生成（同一条件永远得到相同余号），保证演示过程可复现。
+医院带真实经纬度：用户提供定位时按 haversine 计算真实直线距离并排序
+（"离我最近"），未定位时退回 distance_km 参考距离（市中心估算值）。
 """
 import hashlib
 import json
+import math
 from datetime import date, timedelta
 
 from app.dao import db
@@ -33,13 +36,35 @@ def _remaining(doctor: str, visit_date: str, slot: str, department: str) -> int:
     return int(h[:4], 16) % 11
 
 
+def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """两点球面距离（公里）。地球半径取 6371km，医院间距量级下误差可忽略"""
+    r = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lng2 - lng1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return round(2 * r * math.asin(math.sqrt(a)), 2)
+
+
+_HOSPITAL_COLS = (
+    "SELECT id, name, level, city, district, address, phone, departments, "
+    "distance_km, rating, lat, lng FROM hospitals"
+)
+
+
 def list_hospitals(city: str | None = None, district: str | None = None,
-                   department: str | None = None) -> list[dict]:
-    """按城市/区/科室筛选医院，返回距离升序"""
+                   department: str | None = None,
+                   lat: float | None = None, lng: float | None = None) -> list[dict]:
+    """按城市/区/科室筛选医院
+
+    lat/lng 提供（用户真实定位）时：距离按 haversine 计算并按真实距离升序（离我最近）；
+    未提供时：退回 distance_km 参考距离升序。返回的 distance_km 即当前使用的距离。
+    """
+    located = lat is not None and lng is not None
     conn = db.get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id, name, level, city, district, address, phone, departments, distance_km, rating FROM hospitals ORDER BY distance_km")
+            cur.execute(_HOSPITAL_COLS + " ORDER BY distance_km")
             rows = cur.fetchall()
     finally:
         conn.close()
@@ -52,11 +77,19 @@ def list_hospitals(city: str | None = None, district: str | None = None,
             continue
         if department and department not in depts:
             continue
+        r_lat, r_lng = float(r[10]) if r[10] is not None else None, float(r[11]) if r[11] is not None else None
+        if located and r_lat is not None:
+            distance = haversine_km(lat, lng, r_lat, r_lng)
+        else:
+            distance = float(r[8])
         result.append({
             "id": r[0], "name": r[1], "level": r[2], "city": r[3],
             "district": r[4], "address": r[5], "phone": r[6],
-            "departments": depts, "distance_km": float(r[8]), "rating": float(r[9]),
+            "departments": depts, "distance_km": distance, "rating": float(r[9]),
+            "lat": r_lat, "lng": r_lng,
         })
+    if located:
+        result.sort(key=lambda h: h["distance_km"])
     return result
 
 
@@ -65,7 +98,7 @@ def get_hospital(hospital_id: int) -> dict | None:
     conn = db.get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id, name, level, city, district, address, phone, departments, distance_km, rating FROM hospitals WHERE id=%s", (hospital_id,))
+            cur.execute(_HOSPITAL_COLS + " WHERE id=%s", (hospital_id,))
             r = cur.fetchone()
     finally:
         conn.close()
@@ -75,6 +108,8 @@ def get_hospital(hospital_id: int) -> dict | None:
         "id": r[0], "name": r[1], "level": r[2], "city": r[3],
         "district": r[4], "address": r[5], "phone": r[6],
         "departments": json.loads(r[7] or "[]"), "distance_km": float(r[8]), "rating": float(r[9]),
+        "lat": float(r[10]) if r[10] is not None else None,
+        "lng": float(r[11]) if r[11] is not None else None,
     }
 
 
